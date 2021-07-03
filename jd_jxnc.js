@@ -30,7 +30,7 @@ cron "0 9,12,18 * * *" script-path=jd_jxnc.js,tag=京喜农场
 const $ = new Env('京喜农场');
 let notify = ''; // nodejs 发送通知脚本
 let notifyLevel = $.isNode() ? process.env.JXNC_NOTIFY_LEVEL || 1 : 1; // 通知级别 0=只通知成熟;1=本次获得水滴>0;2=任务执行;3=任务执行+未种植种子;
-let notifyBool = true; // 代码内部使用，控制是否通知
+let notifyBool = false; // 代码内部使用，控制是否通知
 let cookieArr = []; // 用户 cookie 数组
 let currentCookie = ''; // 当前用户 cookie
 let tokenNull = {'farm_jstoken': '', 'phoneid': '', 'timestamp': ''}; // 内置一份空的 token
@@ -185,27 +185,29 @@ function requireConfig() {
     // console.log(`jdFruitShareArr账号长度::${jxncShareCodeArr.length}`)
     $.log(`您提供了${jxncShareCodeArr.length}个账号的京喜农场助力码`);
 
-    try {
-      let options = {
-        "url": `https://cdn.jsdelivr.net/gh/gitupdate/updateTeam@master/shareCodes/jxnc.txt`,
-        "headers": {
-          "Accept": "application/json,text/plain, */*",
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Accept-Encoding": "gzip, deflate, br",
-          "Accept-Language": "zh-cn",
-          "Connection": "keep-alive",
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_1_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36"
-        },
-        "timeout": 10000,
-      }
-      $.get(options, (err, resp, data) => { // 初始化内置变量
-        if (!err) {
-          shareCode = data;
-        }
-      });
-    } catch (e) {
-      // 获取内置助力码失败
-    }
+
+	// 内置助力
+    // try {
+    //   let options = {
+    //     "url": `https://cdn.jsdelivr.net/gh/gitupdate/updateTeam@master/shareCodes/jxnc.txt`,
+    //     "headers": {
+    //       "Accept": "application/json,text/plain, */*",
+    //       "Content-Type": "application/x-www-form-urlencoded",
+    //       "Accept-Encoding": "gzip, deflate, br",
+    //       "Accept-Language": "zh-cn",
+    //       "Connection": "keep-alive",
+    //       "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_1_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36"
+    //     },
+    //     "timeout": 10000,
+    //   }
+    //   $.get(options, (err, resp, data) => { // 初始化内置变量
+    //     if (!err) {
+    //       shareCode = data;
+    //     }
+    //   });
+    // } catch (e) {
+    //   // 获取内置助力码失败
+    // }
     resolve()
   })
 }

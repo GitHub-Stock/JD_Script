@@ -36,7 +36,7 @@ const printDetail = $.getdata("CFG_CRAZYJOY_LOG") ? $.getdata("CFG_CRAZYJOY_LOG"
 const autoBuyJoy = $.getdata("CFG_CRAZYJOY_BUY") ? $.getdata("CFG_CRAZYJOY_BUY") === "true" : $.isNode ? true : false  //自动购买
 const autoSellJoy = $.getdata("CFG_CRAZYJOY_SELL") ? $.getdata("CFG_CRAZYJOY_SELL") === "true" : false  //自动回收小于自动购买的JOY
 const autoProduce = $.getdata("CFG_CRAZYJOY_PRODUCE") ? $.getdata("CFG_CRAZYJOY_PRODUCE") === "true" : $.isNode ? true : false  //自动生产金币，不建议开启，开启将会24小时运行
-const shareCodeArr = $.getdata("CFG_CRAZYJOY_SHARECODE") ? $.getdata("CFG_CRAZYJOY_SHARECODE").split('#') : []; //获取互助码
+const shareCodeArr = $.getdata("CFG_CRAZYJOY_SHARECODE") ? $.getdata("CFG_CRAZYJOY_SHARECODE").split('#') : ['']; //获取互助码
   //IOS等用户直接用NobyDa的jd cookie
 let cookiesArr = [], cookie = '',shareCode = [];
 let luckyBoxArr = []

@@ -27,14 +27,14 @@ let jdNotify = true;//用来是否关闭弹窗通知，true表示关闭，false�
 let superMarketUpgrade = true;//自动升级,顺序:解锁升级商品、升级货架,true表示自动升级,false表示关闭自动升级
 let businessCircleJump = true;//小于对方300热力值自动更换商圈队伍,true表示运行,false表示禁止
 let drawLotteryFlag = true;//是否用500蓝币去抽奖，true表示开启，false表示关闭。默认关闭
-let joinPkTeam = true;//是否自动加入PK队伍
+let joinPkTeam = false;//是否自动加入PK队伍
 let message = '', subTitle;
 const JD_API_HOST = 'https://api.m.jd.com/api';
 
 //助力好友分享码
 //此此内容是IOS用户下载脚本到本地使用，填写互助码的地方，同一京东账号的好友互助码请使用@符号隔开。
 //下面给出两个账号的填写示例（iOS只支持2个京东账号）
-let shareCodes = []
+let shareCodes = ['']
 
 !(async () => {
   await requireConfig();
@@ -305,7 +305,7 @@ async function businessCircleActivity() {
     console.log(`pkActivityId:${pkActivityId}\n`);
 
     if (joinStatus === 0) {
-      if (joinPkTeam === 'true') {
+      if (joinPkTeam === 'false') {
         console.log(`\n注：PK会在每天的七点自动随机加入作者创建的队伍\n`)
         await updatePkActivityIdCDN('https://cdn.jsdelivr.net/gh/gitupdate/updateTeam@master/shareCodes/jd_updateTeam.json');
         console.log(`\nupdatePkActivityId[pkActivityId]:::${$.updatePkActivityIdRes && $.updatePkActivityIdRes.pkActivityId}`);
@@ -364,21 +364,6 @@ async function businessCircleActivity() {
       console.log(`商圈PK结束了`)
       if (prizeInfo.pkPrizeStatus === 2) {
         console.log(`开始领取商圈PK奖励`);
-        // const receivedPkTeamPrize = await smtg_receivedPkTeamPrize();
-        // console.log(`商圈PK奖励领取结果：${JSON.stringify(receivedPkTeamPrize)}`)
-        // if (receivedPkTeamPrize.data.bizCode === 0) {
-        //   if (receivedPkTeamPrize.data.result.pkResult === 1) {
-        //     const { pkTeamPrizeInfoVO } = receivedPkTeamPrize.data.result;
-        //     message += `【商圈PK奖励】${pkTeamPrizeInfoVO.blueCoin}蓝币领取成功\n`;
-        //     if ($.isNode()) {
-        //       await notify.sendNotify(`${$.name} - 账号${$.index} - ${$.nickName}`, `【京东账号${$.index}】 ${$.nickName}\n【商圈队伍】PK获胜\n【奖励】${pkTeamPrizeInfoVO.blueCoin}蓝币领取成功`)
-        //     }
-        //   } else if (receivedPkTeamPrize.data.result.pkResult === 2) {
-        //     if ($.isNode()) {
-        //       await notify.sendNotify(`${$.name} - 账号${$.index} - ${$.nickName}`, `【京东账号${$.index}】 ${$.nickName}\n【商圈队伍】PK失败`)
-        //     }
-        //   }
-        // }
       } else if (prizeInfo.pkPrizeStatus === 1) {
         console.log(`商圈PK奖励已经领取\n`)
       }
