@@ -40,7 +40,7 @@ if ($.isNode()) {
 }
 const JD_API_HOST = 'https://api.m.jd.com/';
 !(async () => {
-  $.newShareCodes = []
+  $.newShareCodes = ['']
   // await getAuthorShareCode();
   // await getAuthorShareCode2();
   if (!cookiesArr[0]) {

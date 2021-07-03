@@ -18,7 +18,7 @@ $.accountCheck = true;
 $.init = false;
 // const bean = 1; //兑换多少豆，默认是500
 //IOS等用户直接用NobyDa的jd cookie
-let cookiesArr = [], cookie = '', message, helpInfo, ADD_CART = false;
+let cookiesArr = [], cookie = '', message, helpInfo, ADD_CART = true;
 
 if ($.isNode()) {
   Object.keys(jdCookieNode).forEach((item) => {
