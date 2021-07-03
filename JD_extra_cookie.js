@@ -1,5 +1,5 @@
 /*
-感谢github@dompling的PR
+感谢 github@dompling的PR
 
 Author: 2Ya
 
