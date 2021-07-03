@@ -26,7 +26,7 @@ const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
 let jdNotify = true;//是否关闭通知，false打开通知推送，true关闭通知推送
 //IOS等用户直接用NobyDa的jd cookie
 let cookiesArr = [], cookie = '', message;
-let helpAuthor = true;
+let helpAuthor = false;
 const randomCount = $.isNode() ? 20 : 5;
 
 newShareCodes = [{"inviteCode":"eU9Yab-wZ_gh8WaGmSBH0Q"}] //这里修改你的邀请码

@@ -2,7 +2,7 @@
 #柠檬赚金币
 ##入口为极速版 百元生活费 赚金币 邀请好友
 ##第一次运行可不填写邀请码 运行一次查看自己的邀请码
-export InviterPin="WP5jWmBt//tXTJ6/8DC0jazvLgQilwJjUdtB+hWty+4=" ##你的邀请码
+export InviterPin="" ##你的邀请码
 
 
 [task_local]
@@ -16,7 +16,7 @@ const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
 
 //IOS等用户直接用NobyDa的jd cookie
 let cookiesArr = [], cookie = '', message;
-let InviterPin = 'WP5jWmBt//tXTJ6/8DC0jazvLgQilwJjUdtB+hWty+4='; //
+let InviterPin = 'TtbowzJ6Oqu27TWsRVRPBefEqtwmdf5GaXqc4F52HaM='; //
 
 
 if (process.env.InviterPin) {

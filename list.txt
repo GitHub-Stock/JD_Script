@@ -1,4 +1,4 @@
- jd_crazyJoy.js 京东疯狂的Joy
+ jd_crazy_Joy.js 京东疯狂的Joy
  jd_deleteCoupon.js 京东删除优惠券
  jd_jxmc.js 京喜牧场
  jd_kanjia.js 柠檬0元砍价

@@ -104,14 +104,6 @@ $.appId = 10009;
       if (!$.canHelp) break
       await $.wait(1000 * 10)
     }
-    if (!$.canHelp) continue
-    console.log(`\n\n寻宝大作战，助力作者\n`);
-    for (let id of $.strGroupIds) {
-      console.log(`账号${$.UserName} 去参加寻宝大作战 ${id} 等待10秒`)
-      await joinGroup(id)
-      if (!$.canHelp) break
-      await $.wait(1000 * 10)
-    }
   }
   await showMsg();
 })()

@@ -45,7 +45,7 @@ let superShakeBeanConfig = {
 }
 $.assigFirends = [];
 $.brandActivityId = '';//超级品牌日活动ID
-$.brandActivityId2 = '2vSNXCeVuBy8mXTL2hhG3mwSysoL';//超级品牌日活动ID2
+$.brandActivityId2 = '';//超级品牌日活动ID2
 const JD_API_HOST = 'https://api.m.jd.com/client.action';
 !(async () => {
   if (!cookiesArr[0]) {

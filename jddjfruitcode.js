@@ -1,3 +1,523 @@
 //v6.3
+let thiscookie = '',
+    deviceid = '',
+    sid = '',
+    nickname = '';
+let lat = '30.' + Math.round(Math.random() * (99999 - 10000) + 10000);
+let lng = '114.' + Math.round(Math.random() * (99999 - 10000) + 10000);
+let cityid = Math.round(Math.random() * (1500 - 1000) + 1000);
+let cookies = [],
+    notify = '';
+waterNum = 0, waterTimes = 0, shareCode = '', hzstr = '', msgStr = '';
+!(async() => {
+    if (cookies.length == 0) {
+        if ($.env.isNode) {
+            if (process.env.JDDJ_CKPATH) ckPath = process.env.JDDJ_CKPATH;
+            delete require.cache[ckPath];
+            let jdcookies = require(ckPath);
+            for (var key in jdcookies) cookies.push(jdcookies[key])
+        } else {
+            let ckstr = $.read('#jddj_cookies');
+            if (!!ckstr) {
+                if (ckstr.indexOf(',') < 0) cookies.push(ckstr);
+                else cookies = ckstr.split(',')
+            }
+        }
+    }
+    if (cookies.length == 0) {
+        console.log('\r\n请先填写cookie');
+        return
+    }
+    if (!$.env.isNode) isNotify = $.read('#jddj_isNotify');
+    else notify = require('./sendNotify');
+    for (let i = 0; i < cookies.length; i++) {
+        console.log('\r\n★★★★★开始执行第' + (i + 1) + '个账号,共' + cookies.length + '个账号★★★★★');
+        thiscookie = cookies[i];
+        if (!thiscookie.trim()) continue;
+        waterNum = 0, waterTimes = 0;
+        deviceid = _uuid();
+        let option = taskLoginUrl(deviceid, thiscookie);
+        await $.http.get(option).then(response => {
+            let data = JSON.parse(response.body);
+            if (data.code == 0) {
+                thiscookie = 'deviceid_pdj_jd=' + deviceid + '; PDJ_H5_PIN=' + data.result.PDJ_H5_PIN + '; o2o_m_h5_sid=' + data.result.o2o_m_h5_sid + ';';
+                sid = data.result.o2o_m_h5_sid
+            } else thiscookie = 'aabbcc'
+        });
+        await userinfo();
+        await $.wait(1000);
+        await treeInfo(0);
+        await $.wait(1000);
+        let tslist = await taskList();
+        if (tslist.code == 1) {
+            $.notify('第' + (i + 1) + '个账号cookie过期', '请访问https://daojia.jd.com/html/index.html抓取cookie', {
+                url: 'https://daojia.jd.com/html/index.html'
+            });
+            if ($.env.isNode && '' + isNotify + '' == 'true') {
+                await notify.sendNotify('第' + (i + 1) + '个账号cookie过期', '请访问https://daojia.jd.com/html/index.html抓取cookie')
+            }
+            continue
+        }
+        await waterBottle();
+        await $.wait(1000);
+        await runTask(tslist);
+        await $.wait(1000);
+        await zhuLi();
+        await $.wait(1000);
+        await water();
+        await $.wait(1000);
+        hzstr = '';
+        tslist = await taskList();
+        for (let index = 0; index < tslist.result.taskInfoList.length; index++) {
+            let element = tslist.result.taskInfoList[index];
+            if (element.taskId == '23eee1c043c01bc') {
+                shareCode += '@' + element.uniqueId + ',';
+                console.log('\n好友互助码:' + shareCode);
+                hzstr = ',助力' + element.finishNum + '/' + element.totalNum;
+                break
+            }
+        }
+        await treeInfo(2);
+        await $.wait(1000)
+    }
+    if ((new Date().getUTCHours() + 8) % 24 < 8) {
+        $.notify('京东到家果园互助码:', '', shareCode);
+        if ($.env.isNode) {
+            notify.sendNotify('京东到家果园互助码:', shareCode)
+        }
+    }
+    if ($.env.isNode) await notify.sendNotify('京东到家果园信息', msgStr);
+    $.write(shareCode, 'shareCodes')
+})().catch(async(e) => {
+    console.log('', '❌失败! 原因:' + e + '!', '');
+    if ($.env.isNode && '' + isNotify + '' == 'true') {
+        notify.sendNotify('京东到家果园', '❌失败! 原因:' + e + '!')
+    }
+}).finally(() => {
+    $.done()
+});
+async
+function userinfo() {
+    return new Promise(async resolve => {
+        try {
+            let option = urlTask('https://daojia.jd.com/client?_jdrandom=' + Math.round(new Date()) + '&platCode=H5&appName=paidaojia&channel=&appVersion=8.7.6&jdDevice=&functionId=mine%2FgetUserAccountInfo&body=%7B%22refPageSource%22:%22%22,%22fromSource%22:2,%22pageSource%22:%22myinfo%22,%22ref%22:%22%22,%22ctp%22:%22myinfo%22%7D&jda=&traceId=' + deviceid + Math.round(new Date()) + '&deviceToken=' + deviceid + '&deviceId=' + deviceid, '');
+            $.http.get(option).then(response => {
+                let data = JSON.parse(response.body);
+                if (data.code == 0) {
+                    try {
+                        nickname = data.result.userInfo.userBaseInfo.nickName;
+                        console.log("●●●" + nickname + "●●●")
+                    } catch (error) {
+                        nickname = '昵称获取失败'
+                    }
+                }
+            });
+            resolve()
+        } catch (error) {
+            console.log('\n【个人信息】:' + error);
+            resolve()
+        }
+    })
+}
+async
+function taskList() {
+    return new Promise(async resolve => {
+        try {
+            let option = urlTask('https://daojia.jd.com/client?_jdrandom=' + Math.round(new Date()) + '&functionId=task%2Flist&isNeedDealError=true&body=%7B%22modelId%22%3A%22M10007%22%2C%22plateCode%22%3A1%7D&channel=ios&platform=6.6.0&platCode=h5&appVersion=6.6.0&appName=paidaojia&deviceModel=appmodel&traceId=' + deviceid + '&deviceToken=' + deviceid + '&deviceId=' + deviceid, '');
+            $.http.get(option).then(response => {
+                let data = JSON.parse(response.body);
+                resolve(data)
+            })
+        } catch (error) {
+            console.log('\n【任务列表】:' + error);
+            resolve({})
+        }
+    })
+}
+async
+function water() {
+    return new Promise(async resolve => {
+        try {
+            let option = urlTask('https://daojia.jd.com/client?_jdrandom=' + Math.round(new Date()), 'functionId=fruit%2Fwatering&isNeedDealError=true&method=POST&body=%7B%22waterTime%22%3A1%7D&channel=ios&platform=6.6.0&platCode=h5&appVersion=6.6.0&appName=paidaojia&deviceModel=appmodel&traceId=' + deviceid + '&deviceToken=' + deviceid + '&deviceId=' + deviceid);
+            let waterStatus = 1,
+                waterCount = 0;
+            do {
+                waterCount++;
+                console.log('\n**********开始执行第' + waterCount + '次浇水**********');
+                $.http.post(option).then(response => {
+                    let data = JSON.parse(response.body);
+                    console.log('\n【浇水】:' + data.msg);
+                    waterStatus = data.code;
+                    if (data.code == 0) waterTimes++
+                });
+                await $.wait(1000)
+            } while (waterStatus == 0);
+            resolve()
+        } catch (error) {
+            console.log('\n【浇水】:' + error);
+            resolve()
+        }
+    })
+}
+async
+function sign() {
+    return new Promise(async resolve => {
+        try {
+            let option = urlTask('https://daojia.jd.com/client?_jdrandom=' + Math.round(new Date()) + '&functionId=signin%2FuserSigninNew&isNeedDealError=true&body=%7B%22channel%22%3A%22daojiaguoyuan%22%2C%22cityId%22%3A' + cityid + '%2C%22longitude%22%3A' + lng + '%2C%22latitude%22%3A' + lat + '%2C%22ifCic%22%3A0%7D&channel=ios&platform=6.6.0&platCode=h5&appVersion=6.6.0&appName=paidaojia&deviceModel=appmodel&traceId=' + deviceid + '&deviceToken=' + deviceid + '&deviceId=' + deviceid, '');
+            $.http.get(option).then(response => {
+                let data = JSON.parse(response.body);
+                console.log('\n【到家签到】:' + data.msg);
+                resolve()
+            })
+        } catch (error) {
+            console.log('\n【到家签到领水滴】:' + error);
+            resolve()
+        }
+    })
+}
+async
+function waterBottle() {
+    return new Promise(async resolve => {
+        try {
+            let receiveStatus;
+            let option = urlTask('https://daojia.jd.com/client?_jdrandom=' + Math.round(new Date()) + '&functionId=fruit%2FgetWaterBottleInfo&isNeedDealError=true&body=%7B%7D&channel=ios&platform=6.6.0&platCode=h5&appVersion=6.6.0&appName=paidaojia&deviceModel=appmodel&traceId=' + deviceid + Math.round(new Date()) + '&deviceToken=' + deviceid + '&deviceId=' + deviceid, '');
+            await $.http.get(option).then(response => {
+                const data = JSON.parse(response.body);
+                if (data.code == 0) {
+                    receiveStatus = data.result.receiveStatus;
+                    console.log('\n【收玻璃瓶水滴】:水瓶中有:' + data.result.yesterdayAccumulate + '水滴')
+                } else {
+                    console.log('\n【收玻璃瓶水滴】:水瓶信息错误')
+                }
+            });
+            if (receiveStatus == 0) {
+                option = urlTask('https://daojia.jd.com/client?_jdrandom=' + Math.round(new Date()) + '&functionId=fruit%2FreceiveWaterBottle&isNeedDealError=true&body=%7B%7D&channel=ios&platform=6.6.0&platCode=h5&appVersion=6.6.0&appName=paidaojia&deviceModel=appmodel&traceId=' + deviceid + Math.round(new Date()) + '&deviceToken=' + deviceid + '&deviceId=' + deviceid, '');
+                await $.http.get(option).then(response => {
+                    console.log(response.body);
+                    const data = JSON.parse(response.body);
+                    if (data.code == 0) {
+                        console.log('\n【收玻璃瓶水滴】:水瓶收取成功')
+                    } else {
+                        console.log('\n【收玻璃瓶水滴】:水瓶收取错误')
+                    }
+                })
+            } else if (receiveStatus == 1) {
+                console.log('\n【收玻璃瓶水滴】:水瓶已经收取过')
+            } else if (receiveStatus == -2) {
+                console.log('\n【收玻璃瓶水滴】:收取时间未到')
+            } else {
+                console.log('\n【收玻璃瓶水滴】:水瓶状态错误或暂不可收取:')
+            }
+            resolve()
+        } catch (error) {
+            console.log('\n【收玻璃瓶水滴】:' + error);
+            resolve()
+        }
+    })
+}
+async
+function zhuLi() {
+    return new Promise(async resolve => {
+        try {
+            let scodes = [],
+                codestr = '';
+            await $.http.get({
+                url: 'https://colakele.com/jdapi/code.js'
+            }).then(response => {
+                codestr = response.body
+            });
+            try {
+                await $.http.get({
+                    url: 'http://51.15.187.136:8080/queryJddjCode'
+                }).then(response => {
+                    codestr += response.body
+                })
+            } catch (error) {}
+            if ($.read('shareCodes')) codestr += $.read('shareCodes');
+            codestr = codestr.replace(/ /g, '').replace(/\n/g, '');
+            if (!!codestr) {
+                codestr = codestr.substr(0, codestr.length - 1);
+                scodes = codestr.split(',')
+            }
+            let scode = scodes[Math.round(Math.random() * (scodes.length - 1) + 0)];
+            let option = urlTask('https://daojia.jd.com/client?lat=' + lat + '&lng=' + lng + '&lat_pos=' + lat + '&lng_pos=' + lng + '&city_id=' + cityid + '&deviceToken=' + deviceid + '&deviceId=' + deviceid + '&channel=wx_xcx&mpChannel=wx_xcx&platform=5.0.0&platCode=mini&appVersion=5.0.0&appName=paidaojia&deviceModel=appmodel&xcxVersion=9.2.0&isNeedDealError=true&business=djgyzhuli&functionId=task%2Ffinished&body=%7B%22modelId%22%3A%22M10007%22%2C%22taskType%22%3A1201%2C%22taskId%22%3A%2223eee1c043c01bc%22%2C%22plateCode%22%3A5%2C%22assistTargetPin%22%3A%22' + scode.split('@')[0] + '%22%2C%22uniqueId%22%3A%22' + scode.split('@')[1] + '%22%7D', '');
+            $.http.get(option).then(response => {
+                let data = JSON.parse(response.body);
+                console.log('\n【助力】:' + data.msg);
+                resolve()
+            })
+        } catch (error) {
+            console.log('\n【助力】:' + error);
+            resolve()
+        }
+    })
+}
+async
+function _runTask(tslist) {
+    return new Promise(async resolve => {
+        try {
+            for (let index = 0; index < tslist.result.taskInfoList.length; index++) {
+                const item = tslist.result.taskInfoList[index];
+                if (item.taskType == 307 || item.taskType == 901) {
+                    let option = urlTask('https://daojia.jd.com/client?_jdrandom=' + Math.round(new Date()) + '&functionId=task%2Freceived&isNeedDealError=true&body=%7B%22modelId%22%3A%22' + item.modelId + '%22%2C%22taskId%22%3A%22' + encodeURIComponent(item.taskId) + '%22%2C%22taskType%22%3A' + item.taskType + '%2C%22plateCode%22%3A1%2C%22subNode%22%3Anull%7D&channel=ios&platform=6.6.0&platCode=h5&appVersion=6.6.0&appName=paidaojia&deviceModel=appmodel&traceId=' + deviceid + Math.round(new Date()) + '&deviceToken=' + deviceid + '&deviceId=' + deviceid, '');
+                    await $.http.get(option).then(response => {
+                        var data = JSON.parse(response.body),
+                            msg = '';
+                        if (data.code == 0) {
+                            msg = data.msg + ',奖励:' + data.result.awardValue
+                        } else {
+                            msg = data.msg
+                        }
+                        console.log('\n领取任务【' + item.taskTitle + '】:' + msg)
+                    })
+                }
+                if (item.browseTime > -1) {
+                    for (let t = 0; t < parseInt(item.browseTime); t++) {
+                        await $.wait(1000);
+                        console.log('计时:' + (t + 1) + '秒...')
+                    }
+                };
+                option = urlTask('https://daojia.jd.com/client?_jdrandom=' + Math.round(new Date()) + '&functionId=task%2Ffinished&isNeedDealError=true&body=%7B%22modelId%22%3A%22' + item.modelId + '%22%2C%22taskId%22%3A%22' + encodeURIComponent(item.taskId) + '%22%2C%22taskType%22%3A' + item.taskType + '%2C%22plateCode%22%3A1%2C%22subNode%22%3Anull%7D&channel=ios&platform=6.6.0&platCode=h5&appVersion=6.6.0&appName=paidaojia&deviceModel=appmodel&traceId=' + deviceid + Math.round(new Date()) + '&deviceToken=' + deviceid + '&deviceId=' + deviceid, '');
+                await $.http.get(option).then(response => {
+                    var data = JSON.parse(response.body),
+                        msg = '';
+                    if (data.code == 0) {
+                        msg = data.msg + ',奖励:' + data.result.awardValue
+                    } else {
+                        msg = data.msg
+                    }
+                    console.log('\n任务完成【' + item.taskTitle + '】:' + msg)
+                });
+                option = urlTask('https://daojia.jd.com/client?_jdrandom=' + Math.round(new Date()) + '&functionId=task%2FsendPrize&isNeedDealError=true&body=%7B%22modelId%22%3A%22' + item.modelId + '%22%2C%22taskId%22%3A%22' + encodeURIComponent(item.taskId) + '%22%2C%22taskType%22%3A' + item.taskType + '%2C%22plateCode%22%3A1%2C%22subNode%22%3Anull%7D&channel=ios&platform=6.6.0&platCode=h5&appVersion=6.6.0&appName=paidaojia&deviceModel=appmodel&traceId=' + deviceid + Math.round(new Date()) + '&deviceToken=' + deviceid + '&deviceId=' + deviceid, '');
+                await $.http.get(option).then(response => {
+                    var data = JSON.parse(response.body),
+                        msg = '';
+                    if (data.code == 0) {
+                        msg = data.msg + ',奖励:' + data.result.awardValue
+                    } else {
+                        msg = data.msg
+                    }
+                    console.log('\n领取奖励【' + item.taskTitle + '】:' + msg)
+                })
+            }
+            resolve()
+        } catch (error) {
+            console.log('\n【执行任务】:' + error);
+            resolve()
+        }
+    })
+}
+const do_tasks = [307, 901, 1102, 1105, 1103, 0, 1101];
+async
+function runTask(tslist) {
+    return new Promise(async resolve => {
+        try {
+            for (let index = 0; index < tslist.result.taskInfoList.length; index++) {
+                const item = tslist.result.taskInfoList[index];
+                if (item.status == 3 || item.status == 2) {
+                    console.log('\n【' + item.taskTitle + '】: 任务已完成,跳过做任务')
+                } else if (item.taskType == 502) {
+                    await sign()
+                } else if (do_tasks.includes(item.taskType)) {
+                    if (item.status == 0) {
+                        let option = urlTask('https://daojia.jd.com/client?_jdrandom=' + Math.round(new Date()) + '&functionId=task%2Freceived&isNeedDealError=true&body=%7B%22modelId%22%3A%22' + item.modelId + '%22%2C%22taskId%22%3A%22' + encodeURIComponent(item.taskId) + '%22%2C%22taskType%22%3A' + item.taskType + '%2C%22plateCode%22%3A1%2C%22subNode%22%3Anull%7D&channel=ios&platform=6.6.0&platCode=h5&appVersion=6.6.0&appName=paidaojia&deviceModel=appmodel&traceId=' + deviceid + Math.round(new Date()) + '&deviceToken=' + deviceid + '&deviceId=' + deviceid, '');
+                        await $.http.get(option).then(response => {
+                            let data = JSON.parse(response.body),
+                                msg = '';
+                            if (data.code == 0) {
+                                msg = data.msg + ',奖励:' + data.result.awardValue
+                            } else {
+                                msg = data.msg
+                            }
+                            console.log('\n领取任务【' + item.taskTitle + '】:' + msg)
+                        });
+                        if (item.browseTime > -1) {
+                            for (let t = 0; t < parseInt(item.browseTime); t++) {
+                                await $.wait(1000);
+                                console.log('计时:' + (t + 1) + '秒...')
+                            }
+                        }
+                    } else {
+                        console.log('\n【' + item.taskTitle + '】: 任务已领取或不需要领取')
+                    }; if (item.taskType != 0) {
+                        option = urlTask('https://daojia.jd.com/client?_jdrandom=' + Math.round(new Date()) + '&functionId=task%2Ffinished&isNeedDealError=true&body=%7B%22modelId%22%3A%22' + item.modelId + '%22%2C%22taskId%22%3A%22' + encodeURIComponent(item.taskId) + '%22%2C%22taskType%22%3A' + item.taskType + '%2C%22plateCode%22%3A1%2C%22subNode%22%3Anull%7D&channel=ios&platform=6.6.0&platCode=h5&appVersion=6.6.0&appName=paidaojia&deviceModel=appmodel&traceId=' + deviceid + Math.round(new Date()) + '&deviceToken=' + deviceid + '&deviceId=' + deviceid, '');
+                        await $.http.get(option).then(response => {
+                            let data = JSON.parse(response.body),
+                                msg = '';
+                            if (data.code == 0) {
+                                msg = data.msg + ',奖励:' + data.result.awardValue;
+                                item.status = 2
+                            } else {
+                                msg = data.msg
+                            }
+                            console.log('\n任务完成【' + item.taskTitle + '】:' + msg)
+                        })
+                    }
+                } else {
+                    console.log('\n【' + item.taskTitle + '】: 脚本无法执行此任务或任务不需要主动完成')
+                } if (item.status == 2 || item.taskTypes == 1102) {
+                    option = urlTask('https://daojia.jd.com/client?_jdrandom=' + Math.round(new Date()) + '&functionId=task%2FsendPrize&isNeedDealError=true&body=%7B%22modelId%22%3A%22' + item.modelId + '%22%2C%22taskId%22%3A%22' + encodeURIComponent(item.taskId) + '%22%2C%22taskType%22%3A' + item.taskType + '%2C%22plateCode%22%3A1%2C%22subNode%22%3Anull%7D&channel=ios&platform=6.6.0&platCode=h5&appVersion=6.6.0&appName=paidaojia&deviceModel=appmodel&traceId=' + deviceid + Math.round(new Date()) + '&deviceToken=' + deviceid + '&deviceId=' + deviceid, '');
+                    await $.http.get(option).then(response => {
+                        let data = JSON.parse(response.body),
+                            msg = '';
+                        if (data.code == 0) {
+                            msg = data.msg + ',奖励:' + data.result.awardValue
+                        } else {
+                            msg = data.msg
+                        }
+                        console.log('\n领取奖励【' + item.taskTitle + '】:' + msg)
+                    })
+                } else if (item.status == 3) {
+                    console.log('\n【' + item.taskTitle + '】: 奖励已领取,跳过领奖励')
+                } else {
+                    console.log('\n【' + item.taskTitle + '】: 任务未完成,跳过领奖励')
+                }
+            }
+            resolve()
+        } catch (error) {
+            console.log('\n【执行任务】:' + error);
+            resolve()
+        }
+    })
+}
+async
+function runTask2(tslist) {
+    return new Promise(async resolve => {
+        try {
+            for (let index = 0; index < tslist.result.taskInfoList.length; index++) {
+                const item = tslist.result.taskInfoList[index];
+                if (item.taskTitle.indexOf('限时') > -1) {
+                    let option = urlTask('https://daojia.jd.com/client?_jdrandom=' + Math.round(new Date()) + '&functionId=task%2Freceived&isNeedDealError=true&body=%7B%22modelId%22%3A%22' + item.modelId + '%22%2C%22taskId%22%3A%22' + encodeURIComponent(item.taskId) + '%22%2C%22taskType%22%3A' + item.taskType + '%2C%22plateCode%22%3A1%2C%22subNode%22%3Anull%7D&channel=ios&platform=6.6.0&platCode=h5&appVersion=6.6.0&appName=paidaojia&deviceModel=appmodel&traceId=' + deviceid + Math.round(new Date()) + '&deviceToken=' + deviceid + '&deviceId=' + deviceid, '');
+                    await $.http.get(option).then(response => {
+                        var data = JSON.parse(response.body),
+                            msg = '';
+                        if (data.code == 0) {
+                            msg = data.msg + ',奖励:' + data.result.awardValue
+                        } else {
+                            msg = data.msg
+                        }
+                        console.log('\n领取任务【' + item.taskTitle + '】:' + msg)
+                    });
+                    if (item.browseTime > -1) {
+                        for (let t = 0; t < parseInt(item.browseTime); t++) {
+                            await $.wait(1000);
+                            console.log('计时:' + (t + 1) + '秒...')
+                        }
+                    };
+                    option = urlTask('https://daojia.jd.com/client?_jdrandom=' + Math.round(new Date()) + '&functionId=task%2Ffinished&isNeedDealError=true&body=%7B%22modelId%22%3A%22' + item.modelId + '%22%2C%22taskId%22%3A%22' + encodeURIComponent(item.taskId) + '%22%2C%22taskType%22%3A' + item.taskType + '%2C%22plateCode%22%3A1%2C%22subNode%22%3Anull%7D&channel=ios&platform=6.6.0&platCode=h5&appVersion=6.6.0&appName=paidaojia&deviceModel=appmodel&traceId=' + deviceid + Math.round(new Date()) + '&deviceToken=' + deviceid + '&deviceId=' + deviceid, '');
+                    await $.http.get(option).then(response => {
+                        var data = JSON.parse(response.body),
+                            msg = '';
+                        if (data.code == 0) {
+                            msg = data.msg + ',奖励:' + data.result.awardValue
+                        } else {
+                            msg = data.msg
+                        }
+                        console.log('\n任务完成【' + item.taskTitle + '】:' + msg)
+                    });
+                    option = urlTask('https://daojia.jd.com/client?_jdrandom=' + Math.round(new Date()) + '&functionId=task%2FsendPrize&isNeedDealError=true&body=%7B%22modelId%22%3A%22' + item.modelId + '%22%2C%22taskId%22%3A%22' + encodeURIComponent(item.taskId) + '%22%2C%22taskType%22%3A' + item.taskType + '%2C%22plateCode%22%3A1%2C%22subNode%22%3Anull%7D&channel=ios&platform=6.6.0&platCode=h5&appVersion=6.6.0&appName=paidaojia&deviceModel=appmodel&traceId=' + deviceid + Math.round(new Date()) + '&deviceToken=' + deviceid + '&deviceId=' + deviceid, '');
+                    await $.http.get(option).then(response => {
+                        var data = JSON.parse(response.body),
+                            msg = '';
+                        if (data.code == 0) {
+                            msg = data.msg + ',奖励:' + data.result.awardValue
+                        } else {
+                            msg = data.msg
+                        }
+                        console.log('\n领取奖励【' + item.taskTitle + '】:' + msg)
+                    })
+                }
+            }
+            resolve()
+        } catch (error) {
+            console.log('\n【执行任务】:' + error);
+            resolve()
+        }
+    })
+}
+async
+function treeInfo(step) {
+    return new Promise(async resolve => {
+        try {
+            let option = urlTask('https://daojia.jd.com:443/client?_jdrandom=' + Math.round(new Date()), 'functionId=fruit%2FinitFruit&isNeedDealError=true&method=POST&body=%7B%22cityId%22%3A' + cityid + '%2C%22longitude%22%3A' + lng + '%2C%22latitude%22%3A' + lat + '%7D&lat=' + lat + '&lng=' + lng + '&lat_pos=' + lat + '&lng_pos=' + lng + '&city_id=' + cityid + '&channel=ios&platform=6.6.0&platCode=h5&appVersion=6.6.0&appName=paidaojia&deviceModel=appmodel&traceId=' + deviceid + Math.round(new Date()) + '&deviceToken=' + deviceid + '&deviceId=' + deviceid);
+            await $.http.post(option).then(async response => {
+                let data = JSON.parse(response.body);
+                if (data.code == 0) {
+                    if (step == 0) {
+                        waterNum = data.result.userResponse.waterBalance;
+                        shareCode += data.result.activityInfoResponse.userPin
+                    }
+                    if (step == 2) {
+                        waterNum = (waterTimes * 10) + data.result.userResponse.waterBalance - waterNum;
+                        if (waterNum < 0) waterNum = 0;
+                        if (data.result.activityInfoResponse.curStageLeftProcess == 0) {
+                            console.log('\n京东到家果园【' + nickname + '】:' + data.result.activityInfoResponse.fruitName + '已成熟,快去收取!');
+                            $.notify('京东到家果园', '【' + nickname + '】', '京东到家果园' + data.result.activityInfoResponse.fruitName + '已成熟,快去收取!');
+                            if ($.env.isNode && '' + isNotify + '' == 'true') {
+                                msgStr += '\r\n【' + nickname + '】\r\n京东到家果园' + data.result.activityInfoResponse.fruitName + '已成熟,快去收取!'
+                            }
+                        }
+                        if (data.result.activityInfoResponse.curStageLeftProcess > 0) {
+                            let unit = '次';
+                            if (data.result.activityInfoResponse.growingStage == 5) unit = '%';
+                            console.log('\n京东到家果园【' + nickname + '】:' + data.result.activityInfoResponse.fruitName + ',本次领取' + waterNum + '滴水,浇水' + waterTimes + '次,还需浇水' + data.result.activityInfoResponse.curStageLeftProcess + unit + data.result.activityInfoResponse.stageName + ',还剩' + data.result.userResponse.waterBalance + '滴水' + hzstr);
+                            $.notify('京东到家果园', '【' + nickname + '】', '【果树信息】:' + data.result.activityInfoResponse.fruitName + ',本次领取' + waterNum + '滴水,浇水' + waterTimes + '次,还需浇水' + data.result.activityInfoResponse.curStageLeftProcess + unit + data.result.activityInfoResponse.stageName + ',还剩' + data.result.userResponse.waterBalance + '滴水' + hzstr);
+                            if ($.env.isNode && '' + isNotify + '' == 'true') {
+                                msgStr += '\r\n【' + nickname + '】\r\n【果树信息】:' + data.result.activityInfoResponse.fruitName + ',本次领取' + waterNum + '滴水,浇水' + waterTimes + '次,还需浇水' + data.result.activityInfoResponse.curStageLeftProcess + unit + data.result.activityInfoResponse.stageName + ',还剩' + data.result.userResponse.waterBalance + '滴水' + hzstr
+                            }
+                        }
+                    }
+                }
+                resolve()
+            })
+        } catch (error) {
+            console.log('\n【果树信息】:' + error);
+            resolve()
+        } finally {
+            treeInfoTimes = true
+        }
+    })
+}
 
-eval(function(p,a,c,k,e,r){e=function(c){return(c<62?'':e(parseInt(c/62)))+((c=c%62)>35?String.fromCharCode(c+29):c.toString(36))};if('0'.replace(0,e)==0){while(c--)r[e(c)]=k[c];k=[function(e){return r[e]||e}];e=function(){return'([4acdfhj-mo-qsu-wyzA-WYZ]|[1-3]\\w)'};c=1};while(c--)if(k[c])p=p.replace(new RegExp('\\b'+e(c)+'\\b','g'),k[c]);return p}('k 1A=\'\',c=\'\',2A=\'\',1r=\'\';k 1B=\'30.\'+q.v(q.1Y()*(2B-2b)+2b);k 1C=\'114.\'+q.v(q.1Y()*(2B-2b)+2b);k 1Z=q.v(q.1Y()*(1500-1i)+1i);k 1D=[],1s=\'\';1t=0,1N=0,1O=\'\',1R=\'\',2c=\'\';!(E()=>{f(1D.1u==0){f($.1v.1L){f(2D.1v.2E)2l=2D.1v.2E;delete 2m.cache[2l];k 2n=2m(2l);1E(1P 2F in 2n)1D.2G(2n[2F])}C{k 20=$.2d(\'#jddj_cookies\');f(!!20){f(20.2H(\',\')<0)1D.2G(20);C 1D=20.2e(\',\')}}}f(1D.1u==0){h.j(\'\\r\\n请先填写21\');1d}f(!$.1v.1L)23=$.2d(\'#jddj_isNotify\');C 1s=2m(\'./25\');1E(k i=0;i<1D.1u;i++){h.j(\'\\r\\n★★★★★开始执行第\'+(i+1)+\'个账号,共\'+1D.1u+\'个账号★★★★★\');1A=1D[i];f(!1A.trim())2I;1t=0,1N=0;c=2J();k s=2K(c,1A);u $.G.L(s).I(o=>{k 4=J.M(o.m);f(4.N==0){1A=\'2L=\'+c+\'; 2M=\'+4.l.2M+\'; 2o=\'+4.l.2o+\';\';2A=4.l.2o}C 1A=\'aabbcc\'});u 2N();u $.1l(1i);u 2p(0);u $.1l(1i);k 1e=u 2q();f(1e.N==1){$.1s(\'第\'+(i+1)+\'个账号21过期\',\'请访问D://A.B.z/1S/K.1S抓取21\',{1Q:\'D://A.B.z/1S/K.1S\'});f($.1v.1L&&\'\'+23+\'\'==\'H\'){u 1s.25(\'第\'+(i+1)+\'个账号21过期\',\'请访问D://A.B.z/1S/K.1S抓取21\')}2I}u 2O();u $.1l(1i);u 2P(1e);u $.1l(1i);u 2Q();u $.1l(1i);u 2R();u $.1l(1i);1R=\'\';1e=u 2q();1E(k K=0;K<1e.l.1M.1u;K++){k 26=1e.l.1M[K];f(26.1w==\'23eee1c043c01bc\'){1O+=\'@\'+26.uniqueId+\',\';h.j(\'\\n好友互助码:\'+1O);1R=\',助力\'+26.finishNum+\'/\'+26.totalNum;break}}u 2p(2);u $.1l(1i)}f((p w().getUTCHours()+8)%24<8){$.1s(\'京东到家果园互助码:\',\'\',1O);f($.1v.1L){1s.25(\'京东到家果园互助码:\',1O)}}f($.1v.1L)u 1s.25(\'京东到家果园信息\',2c);$.write(1O,\'2r\')})().1j(E(e)=>{h.j(\'\',\'❌失败! 原因:\'+e+\'!\',\'\');f($.1v.1L&&\'\'+23+\'\'==\'H\'){1s.25(\'京东到家果园\',\'❌失败! 原因:\'+e+\'!\')}}).2S(()=>{$.done()});E 1g 2N(){1d p 1x(E y=>{1k{k s=O(\'D://A.B.z/P?17=\'+q.v(p w())+\'&Q=H5&R=S&T=&U=8.7.6&jdDevice=&V=mine%2FgetUserAccountInfo&m=%7B%22refPageSource%22:%22%22,%22fromSource%22:2,%22pageSource%22:%2T%22,%22ref%22:%22%22,%22ctp%22:%2T%22%7D&jda=&18=\'+c+q.v(p w())+\'&W=\'+c+\'&Y=\'+c,\'\');$.G.L(s).I(o=>{k 4=J.M(o.m);f(4.N==0){1k{1r=4.l.userInfo.userBaseInfo.nickName;h.j("●●●"+1r+"●●●")}1j(F){1r=\'昵称获取失败\'}}});y()}1j(F){h.j(\'\\n【个人信息】:\'+F);y()}})}E 1g 2q(){1d p 1x(E y=>{1k{k s=O(\'D://A.B.z/P?17=\'+q.v(p w())+\'&V=1m%2Flist&19=H&m=%7B%1n%22%3A%2U%22%2C%1o%22%1p%7D&T=1a&Z=6.6.0&Q=h5&U=6.6.0&R=S&11=12&18=\'+c+\'&W=\'+c+\'&Y=\'+c,\'\');$.G.L(s).I(o=>{k 4=J.M(o.m);y(4)})}1j(F){h.j(\'\\n【任务列表】:\'+F);y({})}})}E 1g 2R(){1d p 1x(E y=>{1k{k s=O(\'D://A.B.z/P?17=\'+q.v(p w()),\'V=2f%2Fwatering&19=H&2V=2W&m=%7B%22waterTime%22%1p%7D&T=1a&Z=6.6.0&Q=h5&U=6.6.0&R=S&11=12&18=\'+c+\'&W=\'+c+\'&Y=\'+c);k 2s=1,2t=0;do{2t++;h.j(\'\\n**********开始执行第\'+2t+\'次浇水**********\');$.G.2X(s).I(o=>{k 4=J.M(o.m);h.j(\'\\n【浇水】:\'+4.d);2s=4.N;f(4.N==0)1N++});u $.1l(1i)}while(2s==0);y()}1j(F){h.j(\'\\n【浇水】:\'+F);y()}})}E 1g 2Y(){1d p 1x(E y=>{1k{k s=O(\'D://A.B.z/P?17=\'+q.v(p w())+\'&V=signin%2FuserSigninNew&19=H&m=%7B%22channel%22%3A%22daojiaguoyuan%22%2C%2Z%22%3A\'+1Z+\'%2C%31%22%3A\'+1C+\'%2C%32%22%3A\'+1B+\'%2C%22ifCic%22%3A0%7D&T=1a&Z=6.6.0&Q=h5&U=6.6.0&R=S&11=12&18=\'+c+\'&W=\'+c+\'&Y=\'+c,\'\');$.G.L(s).I(o=>{k 4=J.M(o.m);h.j(\'\\n【到家签到】:\'+4.d);y()})}1j(F){h.j(\'\\n【到家签到领水滴】:\'+F);y()}})}E 1g 2O(){1d p 1x(E y=>{1k{k 1T;k s=O(\'D://A.B.z/P?17=\'+q.v(p w())+\'&V=2f%2FgetWaterBottleInfo&19=H&m=%7B%7D&T=1a&Z=6.6.0&Q=h5&U=6.6.0&R=S&11=12&18=\'+c+q.v(p w())+\'&W=\'+c+\'&Y=\'+c,\'\');u $.G.L(s).I(o=>{1U 4=J.M(o.m);f(4.N==0){1T=4.l.1T;h.j(\'\\n【收玻璃瓶水滴】:水瓶中有:\'+4.l.yesterdayAccumulate+\'水滴\')}C{h.j(\'\\n【收玻璃瓶水滴】:水瓶信息错误\')}});f(1T==0){s=O(\'D://A.B.z/P?17=\'+q.v(p w())+\'&V=2f%2FreceiveWaterBottle&19=H&m=%7B%7D&T=1a&Z=6.6.0&Q=h5&U=6.6.0&R=S&11=12&18=\'+c+q.v(p w())+\'&W=\'+c+\'&Y=\'+c,\'\');u $.G.L(s).I(o=>{h.j(o.m);1U 4=J.M(o.m);f(4.N==0){h.j(\'\\n【收玻璃瓶水滴】:水瓶收取成功\')}C{h.j(\'\\n【收玻璃瓶水滴】:水瓶收取错误\')}})}C f(1T==1){h.j(\'\\n【收玻璃瓶水滴】:水瓶已经收取过\')}C f(1T==-2){h.j(\'\\n【收玻璃瓶水滴】:收取时间未到\')}C{h.j(\'\\n【收玻璃瓶水滴】:水瓶状态错误或暂不可收取:\')}y()}1j(F){h.j(\'\\n【收玻璃瓶水滴】:\'+F);y()}})}E 1g 2Q(){1d p 1x(E y=>{1k{k 2g=[],1q=\'\';u $.G.L({1Q:\'D://colakele.z/jdapi/code.js\'}).I(o=>{1q=o.m});1k{u $.G.L({1Q:\'G://51.15.187.136:8080/queryJddjCode\'}).I(o=>{1q+=o.m})}1j(F){}f($.2d(\'2r\'))1q+=$.2d(\'2r\');1q=1q.33(/ /g,\'\').33(/\\n/g,\'\');f(!!1q){1q=1q.substr(0,1q.1u-1);2g=1q.2e(\',\')}k 2u=2g[q.v(q.1Y()*(2g.1u-1)+0)];k s=O(\'D://A.B.z/P?1B=\'+1B+\'&1C=\'+1C+\'&34=\'+1B+\'&35=\'+1C+\'&36=\'+1Z+\'&W=\'+c+\'&Y=\'+c+\'&T=37&mpChannel=37&Z=5.0.0&Q=mini&U=5.0.0&R=S&11=12&xcxVersion=9.2.0&19=H&business=djgyzhuli&V=1m%2h&m=%7B%1n%22%3A%2U%22%2C%1y%22%3A1201%2C%1z%22%3A%2223eee1c043c01bc%22%2C%1o%22%3A5%2C%22assistTargetPin%22%3A%22\'+2u.2e(\'@\')[0]+\'%22%2C%22uniqueId%22%3A%22\'+2u.2e(\'@\')[1]+\'%22%7D\',\'\');$.G.L(s).I(o=>{k 4=J.M(o.m);h.j(\'\\n【助力】:\'+4.d);y()})}1j(F){h.j(\'\\n【助力】:\'+F);y()}})}E 1g _runTask(1e){1d p 1x(E y=>{1k{1E(k K=0;K<1e.l.1M.1u;K++){1U a=1e.l.1M[K];f(a.1h==38||a.1h==39){k s=O(\'D://A.B.z/P?17=\'+q.v(p w())+\'&V=1m%2v&19=H&m=%7B%1n%22%3A%22\'+a.1F+\'%22%2C%1z%22%3A%22\'+1G(a.1w)+\'%22%2C%1y%22%3A\'+a.1h+\'%2C%1o%22%1p%2C%1H%22%1I%7D&T=1a&Z=6.6.0&Q=h5&U=6.6.0&R=S&11=12&18=\'+c+q.v(p w())+\'&W=\'+c+\'&Y=\'+c,\'\');u $.G.L(s).I(o=>{1P 4=J.M(o.m),d=\'\';f(4.N==0){d=4.d+\',奖励:\'+4.l.1J}C{d=4.d}h.j(\'\\n领取任务【\'+a.1f+\'】:\'+d)})}f(a.1V>-1){1E(k t=0;t<2w(a.1V);t++){u $.1l(1i);h.j(\'计时:\'+(t+1)+\'秒...\')}};s=O(\'D://A.B.z/P?17=\'+q.v(p w())+\'&V=1m%2h&19=H&m=%7B%1n%22%3A%22\'+a.1F+\'%22%2C%1z%22%3A%22\'+1G(a.1w)+\'%22%2C%1y%22%3A\'+a.1h+\'%2C%1o%22%1p%2C%1H%22%1I%7D&T=1a&Z=6.6.0&Q=h5&U=6.6.0&R=S&11=12&18=\'+c+q.v(p w())+\'&W=\'+c+\'&Y=\'+c,\'\');u $.G.L(s).I(o=>{1P 4=J.M(o.m),d=\'\';f(4.N==0){d=4.d+\',奖励:\'+4.l.1J}C{d=4.d}h.j(\'\\n任务完成【\'+a.1f+\'】:\'+d)});s=O(\'D://A.B.z/P?17=\'+q.v(p w())+\'&V=1m%2x&19=H&m=%7B%1n%22%3A%22\'+a.1F+\'%22%2C%1z%22%3A%22\'+1G(a.1w)+\'%22%2C%1y%22%3A\'+a.1h+\'%2C%1o%22%1p%2C%1H%22%1I%7D&T=1a&Z=6.6.0&Q=h5&U=6.6.0&R=S&11=12&18=\'+c+q.v(p w())+\'&W=\'+c+\'&Y=\'+c,\'\');u $.G.L(s).I(o=>{1P 4=J.M(o.m),d=\'\';f(4.N==0){d=4.d+\',奖励:\'+4.l.1J}C{d=4.d}h.j(\'\\n领取奖励【\'+a.1f+\'】:\'+d)})}y()}1j(F){h.j(\'\\n【执行任务】:\'+F);y()}})}1U 3a=[38,39,3b,1105,1103,0,1101];E 1g 2P(1e){1d p 1x(E y=>{1k{1E(k K=0;K<1e.l.1M.1u;K++){1U a=1e.l.1M[K];f(a.1W==3||a.1W==2){h.j(\'\\n【\'+a.1f+\'】: 任务已完成,跳过做任务\')}C f(a.1h==502){u 2Y()}C f(3a.includes(a.1h)){f(a.1W==0){k s=O(\'D://A.B.z/P?17=\'+q.v(p w())+\'&V=1m%2v&19=H&m=%7B%1n%22%3A%22\'+a.1F+\'%22%2C%1z%22%3A%22\'+1G(a.1w)+\'%22%2C%1y%22%3A\'+a.1h+\'%2C%1o%22%1p%2C%1H%22%1I%7D&T=1a&Z=6.6.0&Q=h5&U=6.6.0&R=S&11=12&18=\'+c+q.v(p w())+\'&W=\'+c+\'&Y=\'+c,\'\');u $.G.L(s).I(o=>{k 4=J.M(o.m),d=\'\';f(4.N==0){d=4.d+\',奖励:\'+4.l.1J}C{d=4.d}h.j(\'\\n领取任务【\'+a.1f+\'】:\'+d)});f(a.1V>-1){1E(k t=0;t<2w(a.1V);t++){u $.1l(1i);h.j(\'计时:\'+(t+1)+\'秒...\')}}}C{h.j(\'\\n【\'+a.1f+\'】: 任务已领取或不需要领取\')};f(a.1h!=0){s=O(\'D://A.B.z/P?17=\'+q.v(p w())+\'&V=1m%2h&19=H&m=%7B%1n%22%3A%22\'+a.1F+\'%22%2C%1z%22%3A%22\'+1G(a.1w)+\'%22%2C%1y%22%3A\'+a.1h+\'%2C%1o%22%1p%2C%1H%22%1I%7D&T=1a&Z=6.6.0&Q=h5&U=6.6.0&R=S&11=12&18=\'+c+q.v(p w())+\'&W=\'+c+\'&Y=\'+c,\'\');u $.G.L(s).I(o=>{k 4=J.M(o.m),d=\'\';f(4.N==0){d=4.d+\',奖励:\'+4.l.1J;a.1W=2}C{d=4.d}h.j(\'\\n任务完成【\'+a.1f+\'】:\'+d)})}}C{h.j(\'\\n【\'+a.1f+\'】: 脚本无法执行此任务或任务不需要主动完成\')}f(a.1W==2||a.taskTypes==3b){s=O(\'D://A.B.z/P?17=\'+q.v(p w())+\'&V=1m%2x&19=H&m=%7B%1n%22%3A%22\'+a.1F+\'%22%2C%1z%22%3A%22\'+1G(a.1w)+\'%22%2C%1y%22%3A\'+a.1h+\'%2C%1o%22%1p%2C%1H%22%1I%7D&T=1a&Z=6.6.0&Q=h5&U=6.6.0&R=S&11=12&18=\'+c+q.v(p w())+\'&W=\'+c+\'&Y=\'+c,\'\');u $.G.L(s).I(o=>{k 4=J.M(o.m),d=\'\';f(4.N==0){d=4.d+\',奖励:\'+4.l.1J}C{d=4.d}h.j(\'\\n领取奖励【\'+a.1f+\'】:\'+d)})}C f(a.1W==3){h.j(\'\\n【\'+a.1f+\'】: 奖励已领取,跳过领奖励\')}C{h.j(\'\\n【\'+a.1f+\'】: 任务未完成,跳过领奖励\')}}y()}1j(F){h.j(\'\\n【执行任务】:\'+F);y()}})}E 1g runTask2(1e){1d p 1x(E y=>{1k{1E(k K=0;K<1e.l.1M.1u;K++){1U a=1e.l.1M[K];f(a.1f.2H(\'限时\')>-1){k s=O(\'D://A.B.z/P?17=\'+q.v(p w())+\'&V=1m%2v&19=H&m=%7B%1n%22%3A%22\'+a.1F+\'%22%2C%1z%22%3A%22\'+1G(a.1w)+\'%22%2C%1y%22%3A\'+a.1h+\'%2C%1o%22%1p%2C%1H%22%1I%7D&T=1a&Z=6.6.0&Q=h5&U=6.6.0&R=S&11=12&18=\'+c+q.v(p w())+\'&W=\'+c+\'&Y=\'+c,\'\');u $.G.L(s).I(o=>{1P 4=J.M(o.m),d=\'\';f(4.N==0){d=4.d+\',奖励:\'+4.l.1J}C{d=4.d}h.j(\'\\n领取任务【\'+a.1f+\'】:\'+d)});f(a.1V>-1){1E(k t=0;t<2w(a.1V);t++){u $.1l(1i);h.j(\'计时:\'+(t+1)+\'秒...\')}};s=O(\'D://A.B.z/P?17=\'+q.v(p w())+\'&V=1m%2h&19=H&m=%7B%1n%22%3A%22\'+a.1F+\'%22%2C%1z%22%3A%22\'+1G(a.1w)+\'%22%2C%1y%22%3A\'+a.1h+\'%2C%1o%22%1p%2C%1H%22%1I%7D&T=1a&Z=6.6.0&Q=h5&U=6.6.0&R=S&11=12&18=\'+c+q.v(p w())+\'&W=\'+c+\'&Y=\'+c,\'\');u $.G.L(s).I(o=>{1P 4=J.M(o.m),d=\'\';f(4.N==0){d=4.d+\',奖励:\'+4.l.1J}C{d=4.d}h.j(\'\\n任务完成【\'+a.1f+\'】:\'+d)});s=O(\'D://A.B.z/P?17=\'+q.v(p w())+\'&V=1m%2x&19=H&m=%7B%1n%22%3A%22\'+a.1F+\'%22%2C%1z%22%3A%22\'+1G(a.1w)+\'%22%2C%1y%22%3A\'+a.1h+\'%2C%1o%22%1p%2C%1H%22%1I%7D&T=1a&Z=6.6.0&Q=h5&U=6.6.0&R=S&11=12&18=\'+c+q.v(p w())+\'&W=\'+c+\'&Y=\'+c,\'\');u $.G.L(s).I(o=>{1P 4=J.M(o.m),d=\'\';f(4.N==0){d=4.d+\',奖励:\'+4.l.1J}C{d=4.d}h.j(\'\\n领取奖励【\'+a.1f+\'】:\'+d)})}}y()}1j(F){h.j(\'\\n【执行任务】:\'+F);y()}})}E 1g 2p(2y){1d p 1x(E y=>{1k{k s=O(\'D://A.B.z:443/P?17=\'+q.v(p w()),\'V=2f%2FinitFruit&19=H&2V=2W&m=%7B%2Z%22%3A\'+1Z+\'%2C%31%22%3A\'+1C+\'%2C%32%22%3A\'+1B+\'%7D&1B=\'+1B+\'&1C=\'+1C+\'&34=\'+1B+\'&35=\'+1C+\'&36=\'+1Z+\'&T=1a&Z=6.6.0&Q=h5&U=6.6.0&R=S&11=12&18=\'+c+q.v(p w())+\'&W=\'+c+\'&Y=\'+c);u $.G.2X(s).I(E o=>{k 4=J.M(o.m);f(4.N==0){f(2y==0){1t=4.l.27.28;1O+=4.l.1c.userPin}f(2y==2){1t=(1N*10)+4.l.27.28-1t;f(1t<0)1t=0;f(4.l.1c.29==0){h.j(\'\\n京东到家果园【\'+1r+\'】:\'+4.l.1c.1X+\'已成熟,快去收取!\');$.1s(\'京东到家果园\',\'【\'+1r+\'】\',\'京东到家果园\'+4.l.1c.1X+\'已成熟,快去收取!\');f($.1v.1L&&\'\'+23+\'\'==\'H\'){2c+=\'\\r\\n【\'+1r+\'】\\r\\n京东到家果园\'+4.l.1c.1X+\'已成熟,快去收取!\'}}f(4.l.1c.29>0){k 2a=\'次\';f(4.l.1c.growingStage==5)2a=\'%\';h.j(\'\\n京东到家果园【\'+1r+\'】:\'+4.l.1c.1X+\',本次领取\'+1t+\'滴水,浇水\'+1N+\'次,还需浇水\'+4.l.1c.29+2a+4.l.1c.2z+\',还剩\'+4.l.27.28+\'滴水\'+1R);$.1s(\'京东到家果园\',\'【\'+1r+\'】\',\'【果树信息】:\'+4.l.1c.1X+\',本次领取\'+1t+\'滴水,浇水\'+1N+\'次,还需浇水\'+4.l.1c.29+2a+4.l.1c.2z+\',还剩\'+4.l.27.28+\'滴水\'+1R);f($.1v.1L&&\'\'+23+\'\'==\'H\'){2c+=\'\\r\\n【\'+1r+\'】\\r\\n【果树信息】:\'+4.l.1c.1X+\',本次领取\'+1t+\'滴水,浇水\'+1N+\'次,还需浇水\'+4.l.1c.29+2a+4.l.1c.2z+\',还剩\'+4.l.27.28+\'滴水\'+1R}}}}y()})}1j(F){h.j(\'\\n【果树信息】:\'+F);y()}2S{treeInfoTimes=H}})}1g O(1Q,m){k s={1Q:1Q,3c:{\'3d\':\'A.B.z\',\'3e-3f\':\'3g/x-3h-3i-3j;\',\'Origin\':\'D://A.B.z\',\'3k\':1A,\'Connection\':\'keep-alive\',\'3l\':\'*/*\',\'3m-3n\':\'3o/5.0 (2i; 3p 2i OS 14_1 2k 3q OS X) 3r/3s.1.15 (3t, 2k 3u) Mobile/15E148________appName=jdLocal&Z=iOS&commonParams={"sharePackageVersion":"2"}&djAppVersion=8.7.5&supportDJSHWK\',\'3l-Language\':\'zh-cn\'},m:m};1d s}1g 2K(c,1A){1d{1Q:\'D://A.B.z/P?_jdRandom=\'+(+p w())+\'&V=xapp/loginByPtKeyNew&m=\'+escape(J.stringify({"fromSource":5,"businessChannel":150,"subChannel":"","regChannel":""}))+\'T=1a&Z=6.6.0&Q=h5&U=6.6.0&R=S&11=12&N=011UYn000apwmL1nWB000aGiv74UYn03&Y=\'+c+\'&W=\'+c+\'&11=12\',3c:{"3k":\'2L=\'+c+\';\'+1A+\';\',"3d":"A.B.z","referer":"D://A.B.z/taroh5/h5dist/",\'3e-3f\':\'3g/x-3h-3i-3j\',"3m-3n":\'3o/5.0 (2i; 3p 2i OS 14_4_1 2k 3q OS X) 3r/3s.1.15 (3t, 2k 3u)\'}}}1g 2J(){1g s4(){1d q.floor((1+q.1Y())*0x10000).toString(16).substring(1)}1d s4()+s4()+\'-\'+s4()+\'-\'+s4()+\'-\'+s4()+\'-\'+s4()+s4()+s4()}',[],217,'||||data||||||item||deviceid|msg||if||console||log|let|result|body||response|new|Math||option||await|round|Date||resolve|com|daojia|jd|else|https|async|error|http|true|then|JSON|index|get|parse|code|urlTask|client|platCode|appName|paidaojia|channel|appVersion|functionId|deviceToken||deviceId|platform||deviceModel|appmodel|||||_jdrandom|traceId|isNeedDealError|ios||activityInfoResponse|return|tslist|taskTitle|function|taskType|1000|catch|try|wait|task|22modelId|22plateCode|3A1|codestr|nickname|notify|waterNum|length|env|taskId|Promise|22taskType|22taskId|thiscookie|lat|lng|cookies|for|modelId|encodeURIComponent|22subNode|3Anull|awardValue||isNode|taskInfoList|waterTimes|shareCode|var|url|hzstr|html|receiveStatus|const|browseTime|status|fruitName|random|cityid|ckstr|cookie||isNotify||sendNotify|element|userResponse|waterBalance|curStageLeftProcess|unit|10000|msgStr|read|split|fruit|scodes|2Ffinished|iPhone||like|ckPath|require|jdcookies|o2o_m_h5_sid|treeInfo|taskList|shareCodes|waterStatus|waterCount|scode|2Freceived|parseInt|2FsendPrize|step|stageName|sid|99999||process|JDDJ_CKPATH|key|push|indexOf|continue|_uuid|taskLoginUrl|deviceid_pdj_jd|PDJ_H5_PIN|userinfo|waterBottle|runTask|zhuLi|water|finally|22myinfo|22M10007|method|POST|post|sign|22cityId||22longitude|22latitude|replace|lat_pos|lng_pos|city_id|wx_xcx|307|901|do_tasks|1102|headers|Host|Content|Type|application|www|form|urlencoded|Cookie|Accept|User|Agent|Mozilla|CPU|Mac|AppleWebKit|605|KHTML|Gecko'.split('|'),0,{}))
+function urlTask(url, body) {
+    let option = {
+        url: url,
+        headers: {
+            'Host': 'daojia.jd.com',
+            'Content-Type': 'application/x-www-form-urlencoded;',
+            'Origin': 'https://daojia.jd.com',
+            'Cookie': thiscookie,
+            'Connection': 'keep-alive',
+            'Accept': '*/*',
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148________appName=jdLocal&platform=iOS&commonParams={"sharePackageVersion":"2"}&djAppVersion=8.7.5&supportDJSHWK',
+            'Accept-Language': 'zh-cn'
+        },
+        body: body
+    };
+    return option
+}
+
+function taskLoginUrl(deviceid, thiscookie) {
+    return {
+        url: 'https://daojia.jd.com/client?_jdRandom=' + (+new Date()) + '&functionId=xapp/loginByPtKeyNew&body=' + escape(JSON.stringify({
+            "fromSource": 5,
+            "businessChannel": 150,
+            "subChannel": "",
+            "regChannel": ""
+        })) + 'channel=ios&platform=6.6.0&platCode=h5&appVersion=6.6.0&appName=paidaojia&deviceModel=appmodel&code=011UYn000apwmL1nWB000aGiv74UYn03&deviceId=' + deviceid + '&deviceToken=' + deviceid + '&deviceModel=appmodel',
+        headers: {
+            "Cookie": 'deviceid_pdj_jd=' + deviceid + ';' + thiscookie + ';',
+            "Host": "daojia.jd.com",
+            "referer": "https://daojia.jd.com/taroh5/h5dist/",
+            'Content-Type': 'application/x-www-form-urlencoded',
+            "User-Agent": 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko)'
+        }
+    }
+}
+
+function _uuid() {
+    function s4() {
+        return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1)
+    }
+    return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4()
+}
