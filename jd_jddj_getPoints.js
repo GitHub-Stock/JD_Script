@@ -1,21 +1,21 @@
-/*
-京东到家鲜豆庄园收水滴脚本,支持qx,loon,shadowrocket,surge,nodejs
-用抓包抓 https://daojia.jd.com/html/index.html 页面cookie填写到下面,暂时不知cookie有效期
-抓多账号直接清除浏览器缓存再登录新账号,千万别点退出登录,否则cookie失效
-cookie只要里面的deviceid_pdj_jd=xxx-xxx-xxx;o2o_m_h5_sid=xxx-xxx-xxx关键信息
-五分钟运行一次
-boxjs订阅地址:https://gitee.com/passerby-b/javascript/raw/master/JD/passerby-b.boxjs.json
-TG群:https://t.me/passerbyb2021
 
-[task_local]
-10 0,3,8,11,17 * * * https://raw.githubusercontent.com/passerby-b/JDDJ/main/jddj_getPoints.js
+//京东到家鲜豆庄园收水滴脚本,支持qx,loon,shadowrocket,surge,nodejs
+//用抓包抓 https://daojia.jd.com/html/index.html 页面cookie填写到下面,暂时不知cookie有效期
+//抓多账号直接清除浏览器缓存再登录新账号,千万别点退出登录,否则cookie失效
+//cookie只要里面的deviceid_pdj_jd=xxx-xxx-xxx;o2o_m_h5_sid=xxx-xxx-xxx关键信息
+//五分钟运行一次
+//boxjs订阅地址:https://gitee.com/passerby-b/javascript/raw/master/JD/passerby-b.boxjs.json
+//TG群:https://t.me/passerbyb2021
 
-[Script]
-cron "10 0,3,8,11,17 * * *" script-path=https://raw.githubusercontent.com/passerby-b/JDDJ/main/jddj_getPoints.js,tag=京东到家鲜豆庄园收水滴
+//[task_local]
+//*/5 * * * * https://raw.githubusercontent.com/passerby-b/JDDJ/main/jddj_getPoints.js
 
-*/
-const $ = new API("jddj_getPoints");
-const $ = new Env('京东到家鲜豆庄园收水滴');
+
+//[Script]
+//cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/passerby-b/JDDJ/main/jddj_getPoints.js,tag=京东到家鲜豆庄园收水滴
+
+const $ = new API("jd_jddj_getPoints");
+
 let ckPath = './jdCookie.js';//ck路径,环境变量:JDDJ_CKPATH
 let cookies = [];
 let thiscookie = '', deviceid = '', nickname = '';
