@@ -17,8 +17,8 @@ cron "10 0,3,8,11,17 * * *" script-path=https://raw.githubusercontent.com/passer
 
 */
 
-const $ = new API("jddj_fruit_collectWater");
-const $ = new Env('京东到家果园水车收水滴');
+//const $ = new API("jddj_fruit_collectWater");
+const $ = new API("京东到家果园水车收水滴");
 let ckPath = './jdCookie.js';//ck路径,环境变量:JDDJ_CKPATH
 let cookies = [];
 let thiscookie = '', deviceid = '';
