@@ -1,21 +1,26 @@
 /*
-*v5.4
-*京东到家果园任务脚本,支持qx,loon,shadowrocket,surge,nodejs
-*兼容京东jdCookie.js
-*手机设备在boxjs里填写cookie
+v5.6
+京东到家果园任务脚本,支持qx,loon,shadowrocket,surge,nodejs
+兼容京东jdCookie.js
+手机设备在boxjs里填写cookie
+boxjs订阅地址:https://gitee.com/passerby-b/javascript/raw/master/JD/passerby-b.boxjs.json
+
 [task_local]
-10 0,3,8,11,17 * * * https://raw.githubusercontent.com/colakele/js/main/jd_djfruit.js
+10 0,3,8,11,17 * * * https://raw.githubusercontent.com/passerby-b/JDDJ/main/jddj_fruit.js
+
 [Script]
 cron "10 0,3,8,11,17 * * *" script-path=https://raw.githubusercontent.com/passerby-b/JDDJ/main/jddj_fruit.js,tag=京东到家果园任务
+
 */
 
 let isNotify = true;//是否通知,仅限nodejs
 let ckPath = './jdCookie.js';//ck路径,环境变量:JDDJ_CKPATH
 
-const $ = new API("jddj_fruit");
+//const $ = new API("jddj_fruit");
+const $ = new Env('京东到家果园任务');
 try {
-    //https://cdn.jsdelivr.net/gh/passerby-b/JDDJ@main/jddj_fruit_code.js
-    $.http.get({ url: 'https://ghproxy.com/https://raw.githubusercontent.com/colakele/jd/main/jddjfruitcode.js' }).then(response => {
+    //https://ghproxy.com/https://raw.githubusercontent.com/passerby-b/Script/master/jddj_fruit_code.js
+    $.http.get({ url: 'https://ghproxy.com/https://raw.githubusercontent.com/GitHub-Stock/JD_Script/main/jddj_fruit_code.js' }).then(response => {
         if (!!response.body) eval(response.body);
     });
 } catch (error) {

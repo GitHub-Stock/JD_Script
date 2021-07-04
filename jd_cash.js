@@ -33,7 +33,6 @@ let jdNotify = true;//是否关闭通知，false打开通知推送，true关闭�
 //IOS等用户直接用NobyDa的jd cookie
 let cookiesArr = [], cookie = '', message;
 let helpAuthor = true;
-const randomCount = $.isNode() ? 20 : 5;
 let cashinviteCode = 'eU9YaOnjZv1wp27TzCBF0w';
 let cashinviteCode2 = 'eU9Yabi2NfsgpGrTw3sa0w';
 let cashinviteCode3 = 'eU9Yab_nN_Ug9j_XzSdBhQ';

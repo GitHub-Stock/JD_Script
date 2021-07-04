@@ -1,4 +1,4 @@
-//v6.3
+//v7.2
 let thiscookie = '',
     deviceid = '',
     sid = '',
@@ -15,7 +15,8 @@ waterNum = 0, waterTimes = 0, shareCode = '', hzstr = '', msgStr = '';
             if (process.env.JDDJ_CKPATH) ckPath = process.env.JDDJ_CKPATH;
             delete require.cache[ckPath];
             let jdcookies = require(ckPath);
-            for (var key in jdcookies) cookies.push(jdcookies[key])
+            for (let key in jdcookies)
+                if (!!jdcookies[key]) cookies.push(jdcookies[key])
         } else {
             let ckstr = $.read('#jddj_cookies');
             if (!!ckstr) {
@@ -30,10 +31,11 @@ waterNum = 0, waterTimes = 0, shareCode = '', hzstr = '', msgStr = '';
     }
     if (!$.env.isNode) isNotify = $.read('#jddj_isNotify');
     else notify = require('./sendNotify');
-    for (let i = 0; i < cookies.length; i++) {
+    let accountNum = cookies.length > Math.sqrt(400) ? Math.sqrt(400) : cookies.length;
+    for (let i = 0; i < accountNum; i++) {
         console.log('\r\n★★★★★开始执行第' + (i + 1) + '个账号,共' + cookies.length + '个账号★★★★★');
         thiscookie = cookies[i];
-        if (!thiscookie.trim()) continue;
+        if (!thiscookie) continue;
         waterNum = 0, waterTimes = 0;
         deviceid = _uuid();
         let option = taskLoginUrl(deviceid, thiscookie);
@@ -44,18 +46,22 @@ waterNum = 0, waterTimes = 0, shareCode = '', hzstr = '', msgStr = '';
                 sid = data.result.o2o_m_h5_sid
             } else thiscookie = 'aabbcc'
         });
-        await userinfo();
+        let userdata = await userinfo();
+        if (userdata.type == 1) {
+            $.notify('第' + (i + 1) + '个账号cookie过期', '请访问\nhttps://bean.m.jd.com/bean/signIndex.action\n抓取cookie', {
+                url: 'https://bean.m.jd.com/bean/signIndex.action'
+            });
+            if ($.env.isNode && '' + isNotify + '' == 'true') {
+                await notify.sendNotify('第' + (i + 1) + '个账号cookie过期', '请访问\nhttps://bean.m.jd.com/bean/signIndex.action\n抓取cookie')
+            }
+            continue
+        }
         await $.wait(1000);
         await treeInfo(0);
         await $.wait(1000);
         let tslist = await taskList();
-        if (tslist.code == 1) {
-            $.notify('第' + (i + 1) + '个账号cookie过期', '请访问https://daojia.jd.com/html/index.html抓取cookie', {
-                url: 'https://daojia.jd.com/html/index.html'
-            });
-            if ($.env.isNode && '' + isNotify + '' == 'true') {
-                await notify.sendNotify('第' + (i + 1) + '个账号cookie过期', '请访问https://daojia.jd.com/html/index.html抓取cookie')
-            }
+        if (!tslist.result || !tslist.result.taskInfoList) {
+            console.log('\n任务列表不存在,重新运行!');
             continue
         }
         await waterBottle();
@@ -70,10 +76,16 @@ waterNum = 0, waterTimes = 0, shareCode = '', hzstr = '', msgStr = '';
         tslist = await taskList();
         for (let index = 0; index < tslist.result.taskInfoList.length; index++) {
             let element = tslist.result.taskInfoList[index];
-            if (element.taskId == '23eee1c043c01bc') {
+            if (element.taskId == '23eee1c043c01bc' && !!shareCode) {
                 shareCode += '@' + element.uniqueId + ',';
                 console.log('\n好友互助码:' + shareCode);
-                hzstr = ',助力' + element.finishNum + '/' + element.totalNum;
+                hzstr = ',助力' + element.finishNum + '/' + element.totalNum + ',助力你的好友:';
+                if (element.fissionUserInfoList && element.fissionUserInfoList.length > 0) {
+                    element.fissionUserInfoList.forEach(item => {
+                        hzstr += item.nickName + ','
+                    });
+                    hzstr = hzstr.substr(0, hzstr.length - 1)
+                }
                 break
             }
         }
@@ -81,13 +93,11 @@ waterNum = 0, waterTimes = 0, shareCode = '', hzstr = '', msgStr = '';
         await $.wait(1000)
     }
     if ((new Date().getUTCHours() + 8) % 24 < 8) {
-        $.notify('京东到家果园互助码:', '', shareCode);
-        if ($.env.isNode) {
-            notify.sendNotify('京东到家果园互助码:', shareCode)
-        }
+        $.notify('京东到家果园互助码:', '(复制后面助力码提交,无需任何前缀)', shareCode);
+        if ($.env.isNode) notify.sendNotify('京东到家果园互助码:(复制后面助力码提交,无需任何前缀)', shareCode)
     }
     if ($.env.isNode) await notify.sendNotify('京东到家果园信息', msgStr);
-    $.write(shareCode, 'shareCodes')
+    if (!process.env.SCF_NAMESPACE) $.write(shareCode, 'shareCodes')
 })().catch(async(e) => {
     console.log('', '❌失败! 原因:' + e + '!', '');
     if ($.env.isNode && '' + isNotify + '' == 'true') {
@@ -111,11 +121,13 @@ function userinfo() {
                         nickname = '昵称获取失败'
                     }
                 }
-            });
-            resolve()
+                resolve(data)
+            })
         } catch (error) {
             console.log('\n【个人信息】:' + error);
-            resolve()
+            resolve({
+                type: 1
+            })
         }
     })
 }
@@ -148,7 +160,8 @@ function water() {
                     let data = JSON.parse(response.body);
                     console.log('\n【浇水】:' + data.msg);
                     waterStatus = data.code;
-                    if (data.code == 0) waterTimes++
+                    if (data.code == 0) waterTimes++;
+                    if (data.msg.indexOf('不存在') > -1) console.log('\n请先去果园手动选择水果种植.......')
                 });
                 await $.wait(1000)
             } while (waterStatus == 0);
@@ -193,7 +206,6 @@ function waterBottle() {
             if (receiveStatus == 0) {
                 option = urlTask('https://daojia.jd.com/client?_jdrandom=' + Math.round(new Date()) + '&functionId=fruit%2FreceiveWaterBottle&isNeedDealError=true&body=%7B%7D&channel=ios&platform=6.6.0&platCode=h5&appVersion=6.6.0&appName=paidaojia&deviceModel=appmodel&traceId=' + deviceid + Math.round(new Date()) + '&deviceToken=' + deviceid + '&deviceId=' + deviceid, '');
                 await $.http.get(option).then(response => {
-                    console.log(response.body);
                     const data = JSON.parse(response.body);
                     if (data.code == 0) {
                         console.log('\n【收玻璃瓶水滴】:水瓶收取成功')
@@ -222,30 +234,34 @@ function zhuLi() {
             let scodes = [],
                 codestr = '';
             await $.http.get({
-                url: 'https://colakele.com/jdapi/code.js'
+                url: 'https://gitee.com/passerby-b/javascript/raw/master/test/sharecode.js'
             }).then(response => {
                 codestr = response.body
             });
+            if (new Date().getHours() < 8)
+                if ($.read('shareCodes')) codestr += $.read('shareCodes');
             try {
                 await $.http.get({
-                    url: 'http://51.15.187.136:8080/queryJddjCode'
+                    url: 'http://51.15.187.136:8080/queryJddjCode',
+                    timeout: 20000
                 }).then(response => {
                     codestr += response.body
                 })
             } catch (error) {}
-            if ($.read('shareCodes')) codestr += $.read('shareCodes');
             codestr = codestr.replace(/ /g, '').replace(/\n/g, '');
             if (!!codestr) {
                 codestr = codestr.substr(0, codestr.length - 1);
                 scodes = codestr.split(',')
             }
-            let scode = scodes[Math.round(Math.random() * (scodes.length - 1) + 0)];
-            let option = urlTask('https://daojia.jd.com/client?lat=' + lat + '&lng=' + lng + '&lat_pos=' + lat + '&lng_pos=' + lng + '&city_id=' + cityid + '&deviceToken=' + deviceid + '&deviceId=' + deviceid + '&channel=wx_xcx&mpChannel=wx_xcx&platform=5.0.0&platCode=mini&appVersion=5.0.0&appName=paidaojia&deviceModel=appmodel&xcxVersion=9.2.0&isNeedDealError=true&business=djgyzhuli&functionId=task%2Ffinished&body=%7B%22modelId%22%3A%22M10007%22%2C%22taskType%22%3A1201%2C%22taskId%22%3A%2223eee1c043c01bc%22%2C%22plateCode%22%3A5%2C%22assistTargetPin%22%3A%22' + scode.split('@')[0] + '%22%2C%22uniqueId%22%3A%22' + scode.split('@')[1] + '%22%7D', '');
-            $.http.get(option).then(response => {
-                let data = JSON.parse(response.body);
-                console.log('\n【助力】:' + data.msg);
-                resolve()
-            })
+            for (let index = 0; index < scodes.length; index++) {
+                let option = urlTask('https://daojia.jd.com/client?lat=' + lat + '&lng=' + lng + '&lat_pos=' + lat + '&lng_pos=' + lng + '&city_id=' + cityid + '&deviceToken=' + deviceid + '&deviceId=' + deviceid + '&channel=wx_xcx&mpChannel=wx_xcx&platform=5.0.0&platCode=mini&appVersion=5.0.0&appName=paidaojia&deviceModel=appmodel&xcxVersion=9.2.0&isNeedDealError=true&business=djgyzhuli&functionId=task%2Ffinished&body=%7B%22modelId%22%3A%22M10007%22%2C%22taskType%22%3A1201%2C%22taskId%22%3A%2223eee1c043c01bc%22%2C%22plateCode%22%3A5%2C%22assistTargetPin%22%3A%22' + scodes[index].split('@')[0] + '%22%2C%22uniqueId%22%3A%22' + scodes[index].split('@')[1] + '%22%7D', '');
+                await $.http.get(option).then(response => {
+                    let data = JSON.parse(response.body);
+                    console.log('\n【助力】:' + data.msg)
+                });
+                await $.wait(1000)
+            }
+            resolve()
         } catch (error) {
             console.log('\n【助力】:' + error);
             resolve()
@@ -510,7 +526,7 @@ function taskLoginUrl(deviceid, thiscookie) {
             "Host": "daojia.jd.com",
             "referer": "https://daojia.jd.com/taroh5/h5dist/",
             'Content-Type': 'application/x-www-form-urlencoded',
-            "User-Agent": 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko)'
+            "User-Agent": 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148________appName=jdLocal&platform=iOS&commonParams={"sharePackageVersion":"2"}&djAppVersion=8.7.5&supportDJSHWK'
         }
     }
 }
