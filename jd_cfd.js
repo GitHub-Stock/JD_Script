@@ -1,5 +1,4 @@
 /*
-自动提交助力码，删除内置助力码
 京喜财富岛
 根据github@MoPoQAQ 财富岛脚本修改而来。无需京喜token,只需京东cookie即可.
 cron 5 8,13,19 * * * jd_cfd.js
@@ -42,7 +41,8 @@ $.notifyTime = $.getdata("cfd_notifyTime");
 $.result = [];
 $.shareCodes = [];
 let cookiesArr = [], cookie = '', token;
-let myInviteCode;
+
+const randomCount = $.isNode() ? 3 : 3;
 if ($.isNode()) {
   Object.keys(jdCookieNode).forEach((item) => {
     cookiesArr.push(jdCookieNode[item])
@@ -124,13 +124,6 @@ $.appId = 10009;
 async function cfd() {
   try {
     const beginInfo = await getUserInfo();
-    
-    const submitCodeRes = await submitCode();
-    if (submitCodeRes && submitCodeRes.code === 200) {
-      console.log(`🗻财富岛-互助码提交成功！🗻`);
-    }else if (submitCodeRes.code === 300) {
-      console.log(`🗻财富岛-互助码已提交！🗻`);
-    }
 
     await $.wait(2000);
     await querySignList();
@@ -268,7 +261,6 @@ function getUserInfo(showInvite = true) {
           if (showInvite && strMyShareId) {
             console.log(`财富岛好友互助码每次运行都变化,旧的可继续使用`);
             $.log(`\n【京东账号${$.index}（${$.UserName}）的${$.name}好友互助码】${strMyShareId}\n\n`);
-            myInviteCode = strMyShareId;
           }
           $.info = {
             ...$.info,
@@ -1160,6 +1152,33 @@ function showMsg() {
   });
 }
 
+function readShareCode() {
+  console.log(`开始`)
+  return new Promise(async resolve => {
+    $.get({
+      url: `http://api.sharecode.ga/api/jxcfd/${randomCount}`,
+      'timeout': 10000
+    }, (err, resp, data) => {
+      try {
+        if (err) {
+          console.log(`${JSON.stringify(err)}`)
+          console.log(`${$.name} API请求失败，请检查网路重试`)
+        } else {
+          if (data) {
+            console.log(`随机取${randomCount}个码放到您固定的互助码后面(不影响已有固定互助)`)
+            data = JSON.parse(data);
+          }
+        }
+      } catch (e) {
+        $.logErr(e, resp)
+      } finally {
+        resolve(data);
+      }
+    })
+    await $.wait(10000);
+    resolve()
+  })
+}
 //格式化助力码
 function shareCodesFormat() {
   return new Promise(async resolve => {
