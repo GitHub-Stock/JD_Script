@@ -7,12 +7,12 @@
 //boxjs订阅地址:https://gitee.com/passerby-b/javascript/raw/master/JD/passerby-b.boxjs.json
 //TG群:https://t.me/passerbyb2021
 
-//[task_local]
-//*/5 * * * * https://raw.githubusercontent.com/passerby-b/JDDJ/main/jddj_getPoints.js
+[task_local]
+*/5 * * * * https://raw.githubusercontent.com/passerby-b/JDDJ/main/jddj_getPoints.js
 
 
 //[Script]
-//cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/passerby-b/JDDJ/main/jddj_getPoints.js,tag=京东到家鲜豆庄园收水滴
+cron "*/5 * * * *" script-path="https://raw.githubusercontent.com/passerby-b/JDDJ/main/jddj_getPoints.js",tag="京东到家鲜豆庄园收水滴"
 
 const $ = new API("jd_jddj_getPoints");
 
