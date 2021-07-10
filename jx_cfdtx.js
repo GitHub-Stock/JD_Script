@@ -1,8 +1,4 @@
-/*
-[task_local]
-#京喜财富岛提现
-0 0 0 * * ? * https://raw.githubusercontent.com/colakele/jd/master/jx_cfdtx.js, tag=京喜财富岛提现, img-url=https://raw.githubusercontent.com/58xinian/icon/master/jd_syj.png, enabled=true
-*/
+
 
 const $ = new Env("京喜财富岛提现");
 const JD_API_HOST = "https://m.jingxi.com/";
