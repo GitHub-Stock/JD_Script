@@ -195,4 +195,8 @@ function wait(t) {
       resolve()
     }, t)
   })
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 7d0ef0b755e39395e3d7689e45ef24b021ec3596
