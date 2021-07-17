@@ -1,9 +1,5 @@
 /*
-美丽研究院
-更新时间:2021-05-08
-活动入口：京东app首页-美妆馆-底部中间按钮
-只支持Node.js支持N个京东账号
-脚本兼容: Node.js
+
 cron 1 7,12,19 * * * jd_beauty.js
  */
 const $ = new Env('美丽研究院');
@@ -13,11 +9,12 @@ const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
 const WebSocket = require('ws');
 //const WebSocket = $.isNode() ? require('websocket').w3cwebsocket: SockJS;
 let jdNotify = true;//是否关闭通知，false打开通知推送，true关闭通知推送
+const randomCount = $.isNode() ? 20 : 5;
 $.accountCheck = true;
 $.init = false;
 // const bean = 1; //兑换多少豆，默认是500
 //IOS等用户直接用NobyDa的jd cookie
-let cookiesArr = [], cookie = '', message, helpInfo, ADD_CART = true;
+let cookiesArr = [], cookie = '', message, helpInfo, ADD_CART = false;
 
 if ($.isNode()) {
   Object.keys(jdCookieNode).forEach((item) => {

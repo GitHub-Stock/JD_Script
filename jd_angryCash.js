@@ -1,123 +1,139 @@
 /*
-
-#口袋书店
-1 8,12,18 * * *  jd_dogsEmploy.js
-
+愤怒的现金
+更新时间：2021-7-13
+备注：极速助力，打击黑产盗取现金的犯罪行为。默认向前助力9个账号，若要指定被助力账号，需cashHelpPins环境变量中填入需要助力的pt_pin，有多个请用@符号连接。
+0 0 * * * https://raw.githubusercontent.com/cdle/jd_study/main/jd_angryCash.js
 */
-const $ = Env("dogs_employ")
+const $ = new Env("愤怒的现金")
 const ua = `jdltapp;iPhone;3.1.0;${Math.ceil(Math.random()*4+10)}.${Math.ceil(Math.random()*4)};${randomString(40)}`
+const JD_API_HOST = 'https://api.m.jd.com/client.action';
 let cookiesArr = []
-let cookie = ''
-let inviters = []
-let helpNum = 4;//默认帮助前七个好友，其他自行修改
-let inviter = {};
-
+var pins = process.env.cashHelpPins ?? ""
+var helps = [];
+var tools = [];
 !(async () => {
     await requireConfig()
-    if (!cookiesArr[0]) {
-        $.msg($.name, '【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取', 'https://bean.m.jd.com/bean/signIndex.action', {
-            "open-url": "https://bean.m.jd.com/bean/signIndex.action"
-        });
-        return;
+    len = cookiesArr.length
+    if(!pins){
+        console.log("未设置环境变量cashHelpPins，默认助力前9个账号")
     }
-    for (let i = 0; i < cookiesArr.length; i++) {
-        if (cookiesArr[i]) {
-            cookie = cookiesArr[i];
-            $.cookie = cookie;
-            $.UserName = decodeURIComponent(cookie.match(/pt_pin=([^; ]+)(?=;?)/) && cookie.match(/pt_pin=([^; ]+)(?=;?)/)[1])
-            $.index = i + 1;
-            $.isLogin = true;
-            $.nickName = '';
-            message = '';
-            await TotalBean();
-            console.log(`\n开始【京东账号${$.index}】${$.nickName || $.UserName}\n`);
-            if (!$.isLogin) {
-                $.msg($.name, `【提示】cookie已失效`, `京东账号${$.index} ${$.nickName || $.UserName}\n请重新登录获取\nhttps://bean.m.jd.com/bean/signIndex.action`, {
-                    "open-url": "https://bean.m.jd.com/bean/signIndex.action"
-                });
-                if ($.isNode()) {
-                    await notify.sendNotify(`${$.name}cookie已失效 - ${$.UserName}`, `京东账号${$.index} ${$.UserName}\n请重新登录获取cookie`);
-                }
-                continue
+    for (let i = 0; i < len; i++) {
+        cookie = cookiesArr[i];
+        pin = cookie.match(/pt_pin=([^; ]+)(?=;?)/) && cookie.match(/pt_pin=([^; ]+)(?=;?)/)[1]
+        if((!pins && i<9) || (pins && pins.indexOf(pin)!=-1)){
+            data = await requestApi("cash_mob_home", cookie)
+            inviteCode = data?.data?.result?.inviteCode
+            if (inviteCode) {
+                shareDate = data?.data?.result?.shareDate
+                helps.push({inviteCode: inviteCode, key: i})
+                tools.push({success: 0, shareDate:"", cookie: cookie, key: i, shareDate: shareDate})
             }
-            j = inviters.length
-            // do {
-                if(j>0){
-                    inviter = inviters[0]
-                }
-                temp = {}
-                data = await getJoyBaseInfo()
-                if (data?.data?.invitePin) {
-                    temp.pin = data.data.invitePin
-                    if (data?.data?.helpState == 1) {
-                        inviters[0].num++
-                        if(inviters[0].num >= 12){
-                            inviters.shift();
-                            if(inviters.length==0){
-                                 break
-                            }
-                        }
-                    }
-                    await $.wait(1000)
-                    data = await getGameInvitationList()
-                    if (i<helpNum && data?.data?.invitationNum != undefined) {
-                        temp.num = data.data.invitationNum
-                        if(temp.num<12){
-                         inviters.push(temp)
-                        }
-                    }
-                }
-                // j--
-                console.log(inviters)
-            // } while (j>0);
-           
+        } else {
+            tools.push({success: 0, shareDate:"", cookie: cookie, key: i})
         }
     }
-})()
-
-function getGameInvitationList() {
-    return new Promise(resolve => {
-        $.post(getRequest(`functionId=gameInvitationList&body={"businesstype":1,"linkId":"LsQNxL7iWDlXUs6cFl-AAg"}&_t=${Date.now()}&appid=activities_platform`), (err, resp, data) => {
-            try {
-                data = JSON.parse(data)
-            } catch (e) {
-                $.logErr('Error: ', e, resp)
-            } finally {
-                resolve(data)
-            }
-        })
-    })
-}
-
-function getJoyBaseInfo() {
-    return new Promise(resolve => {
-        $.post(getRequest(`functionId=joyBaseInfo&body={"taskId":"","inviteType":"${inviter == {} ? '' : '2'}","inviterPin":"${inviter.pin??''}","linkId":"LsQNxL7iWDlXUs6cFl-AAg"}&_t=${Date.now()}&appid=activities_platform`), (err, resp, data) => {
-            try {
-                data = JSON.parse(data)
-            } catch (e) {
-                $.logErr('Error: ', e, resp)
-            } finally {
-                resolve(data)
-            }
-        })
-    })
-}
-
-function getRequest(body) {
-    return {
-        url: `https://api.m.jd.com/`,
-        headers: {
-            'Host': 'api.m.jd.com',
-            'accept': 'application/json, text/plain, */*',
-            'content-type': 'application/x-www-form-urlencoded',
-            'origin': 'hhttps://joypark.jd.com',
-            'accept-language': 'zh-cn',
-            'User-Agent': ua,
-            'referer': 'https://joypark.jd.com/?activityId=LsQNxL7iWDlXUs6cFl-AAg&lng=110.309497&lat=25.244346&sid=0341d5b9d804d0b838ae6018c19088dw&un_area=20_1726_22885_51456',
-            'cookie': cookie
-        },
-        body: body,
+    while(tools.length>0 && helps.length>0) {
+        var tool = tools.pop()
+        var cookie = tool.cookie
+        if(!tool.shareDate){
+            requestApi("cash_mob_home", cookie, {}, tool).then(function(data){
+                var tool = data.tool
+                if(data.code === undefined){
+                    tools.unshift(tool)
+                    return
+                }
+                shareDate = data?.data?.result?.shareDate
+                if(!shareDate){
+                    return
+                }
+                tool.shareDate = shareDate
+                help(tool)
+            })
+        }else{
+            help(tool)
+        }
+        await $.wait(20)
     }
+    await $.wait(10000)
+    
+})().catch((e) => {
+    $.log('', `❌ ${$.name}, 失败! 原因: ${e}!`, '')
+}).finally(() => {
+    $.done();
+})
+
+function help(tool){
+    var cookie = tool.cookie
+    var inviteCode = helps[0].inviteCode
+    var key = helps[0].key
+    requestApi("cash_mob_assist", cookie, {
+        source: 3,
+        inviteCode: inviteCode,
+        shareDate: tool.shareDate
+    }).then(function(data){
+        console.log(`${tool.key+1}->${key+1}`,data?.data?.bizMsg)
+        switch (data?.data?.bizCode) {
+            case 0: //助力成功
+                tool.success++
+                break;
+            case 210: //您无法为自己助力哦~
+                if(tools.length==0){
+                    console.log("跳出循环")
+                    tool.success = 3
+                }
+                break;
+            case 188: //活动太火爆啦\n看看其他活动吧~'
+                tool.success = 3
+                break
+            case 206: //今日已为Ta助力过啦~
+                break;
+            case 207: //啊哦~今日助力次数用完啦
+                tool.success = 3
+                break
+            case 208: //您来晚啦，您的好友已经领到全部奖励了
+                if(helps[0]?.inviteCode==inviteCode)helps.shift()
+                break;
+            case 106: //你点击的太快啦\n请稍后尝试~
+                break;
+            default:
+                console.log("异常", data)
+                tool.success = 3
+                break;
+        }
+        if(tool.success<3){
+            tools.unshift(tool)
+        }         
+    })
+}
+
+function requestApi(functionId, cookie, body = {}, tool) {
+    return new Promise(resolve => {
+        $.post({
+            url: `${JD_API_HOST}?functionId=${functionId}&body=${escape(JSON.stringify(body))}&appid=CashRewardMiniH5Env&appid=9.1.0`,
+            headers: {
+                'Cookie': cookie,
+                'Accept': '*/*',
+                'Connection': 'keep-alive',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'User-Agent': ua,
+                'Accept-Language': 'zh-Hans-CN;q=1',
+                'Host': 'api.m.jd.com',
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Referer': 'http://wq.jd.com/wxapp/pages/hd-interaction/index/index',
+            },
+        }, (_, resp, data) => {
+            try {
+                data = JSON.parse(data)
+            } catch (e) {
+                $.logErr('Error: ', e, resp)
+            } finally {
+                if(tool){
+                    data.tool = tool
+                }
+                resolve(data)
+            }
+        })
+    })
 }
 
 function requireConfig() {
@@ -136,51 +152,6 @@ function requireConfig() {
         }
         console.log(`共${cookiesArr.length}个京东账号\n`)
         resolve()
-    })
-}
-
-function TotalBean() {
-    return new Promise(async resolve => {
-        const options = {
-            "url": `https://wq.jd.com/user/info/QueryJDUserInfo?sceneval=2`,
-            "headers": {
-                "Accept": "application/json,text/plain, */*",
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Accept-Encoding": "gzip, deflate, br",
-                "Accept-Language": "zh-cn",
-                "Connection": "keep-alive",
-                "Cookie": cookie,
-                "Referer": "https://wqs.jd.com/my/jingdou/my.shtml?sceneval=2",
-                "User-Agent": $.isNode() ? (process.env.JD_USER_AGENT ? process.env.JD_USER_AGENT : (require('./USER_AGENTS').USER_AGENT)) : ($.getdata('JDUA') ? $.getdata('JDUA') : "jdapp;iPhone;9.4.4;14.3;network/4g;Mozilla/5.0 (iPhone; CPU iPhone OS 14_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1")
-            }
-        }
-        $.post(options, (err, resp, data) => {
-            try {
-                if (err) {
-                    console.log(`${JSON.stringify(err)}`)
-                    console.log(`${$.name} API请求失败，请检查网路重试`)
-                } else {
-                    if (data) {
-                        data = JSON.parse(data);
-                        if (data['retcode'] === 13) {
-                            $.isLogin = false; //cookie过期
-                            return
-                        }
-                        if (data['retcode'] === 0) {
-                            $.nickName = (data['base'] && data['base'].nickname) || $.UserName;
-                        } else {
-                            $.nickName = $.UserName
-                        }
-                    } else {
-                        console.log(`京东服务器返回空数据`)
-                    }
-                }
-            } catch (e) {
-                $.logErr(e, resp)
-            } finally {
-                resolve();
-            }
-        })
     })
 }
 
@@ -531,7 +502,7 @@ function Env(t, e) {
         done(t = {}) {
             const e = (new Date).getTime(),
                 s = (e - this.startTime) / 1e3;
-            this.log("", `🔔${this.name}, 结束! 🕛 ${s} 秒`), this.log(), (this.isSurge() || this.isQuanX() || this.isLoon()) && $done(t)
+            this.log("", `🔔${this.name}, 结束! 🕛 ${s-10} 秒`), this.log(), (this.isSurge() || this.isQuanX() || this.isLoon()) && $done(t)
         }
     }(t, e)
 }
