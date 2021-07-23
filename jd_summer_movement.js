@@ -576,6 +576,9 @@ async function dealReturn(type, res) {
         }
         $.taskList = data.data.result && data.data.result.taskVos || [];
       } else if (data.data && data.data.bizMsg) {
+        if(data.data.bizMsg.indexOf('活动太火爆') > -1){
+          $.hotFlag = true;
+        }
         console.log(data.data.bizMsg);
       } else {
         console.log(res);
@@ -589,6 +592,9 @@ async function dealReturn(type, res) {
           console.log(data.data.result.successToast);
         }
       } else if (data.data && data.data.bizMsg) {
+        if(data.data.bizMsg.indexOf('活动太火爆') > -1){
+          $.hotFlag = true;
+        }
         console.log(data.data.bizMsg);
       } else {
         console.log(res);
@@ -637,6 +643,8 @@ async function dealReturn(type, res) {
       } else if (data.data && data.data.bizMsg) {
         if (data.data.bizMsg.indexOf('不在运动中') > -1) {
           $.speedTraining = false;
+        }else if(data.data.bizMsg.indexOf('活动太火爆') > -1){
+          $.hotFlag = true;
         }
         console.log(data.data.bizMsg);
       } else {
@@ -650,6 +658,8 @@ async function dealReturn(type, res) {
       } else if (data.data && data.data.bizMsg) {
         if (data.data.bizMsg.indexOf('运动量已经够啦') > -1) {
           $.speedTraining = false;
+        }else if(data.data.bizMsg.indexOf('活动太火爆') > -1){
+          $.hotFlag = true;
         }
         console.log(data.data.bizMsg);
       } else {
