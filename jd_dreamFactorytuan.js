@@ -23,7 +23,7 @@
   const notify = $.isNode() ? require('./sendNotify') : '';
   const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
   const openTuanCK = $.isNode() ? (process.env.OPEN_DREAMFACTORY_TUAN ? process.env.OPEN_DREAMFACTORY_TUAN : '1,2,3,4'):'1,2,3,4';
-  const helpFlag = true;//是否参考作者团
+  const helpFlag = false;//是否参考作者团
   let tuanActiveId = ``;
   let cookiesArr = [], cookie = '', message = '';
   $.tuanIds = [];
