@@ -32,7 +32,7 @@ $.InviteList = []
 $.innerInviteList = [];
 const HelpAuthorFlag = false;//是否助力  true 助力，false 不助力
 
-let codeIndex = $.getval('gua_wealth_island_codeId') || '' // 定义提交助力码的账号如2,3,5
+let codeIndex = $.getval('gua_wealth_island_codeId') || '1,2,3,4' // 定义提交助力码的账号如2,3,5
 if ($.isNode() && process.env.gua_wealth_island_codeId) {
   codeIndex = process.env.gua_wealth_island_codeId;
 }
@@ -58,7 +58,7 @@ $.appId = 10032;
 
 !(async () => {
   if (!cookiesArr[0]) {
-    $.msg('【京东账号一】宠汪汪积分兑换奖品失败', '【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取', 'https://bean.m.jd.com/bean/signIndex.action', { "open-url": "https://bean.m.jd.com/bean/signIndex.action" });
+    $.msg('', '【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取', 'https://bean.m.jd.com/bean/signIndex.action', { "open-url": "https://bean.m.jd.com/bean/signIndex.action" });
     return
   }
   await getCode()
@@ -80,10 +80,10 @@ $.appId = 10032;
   let getShareNum = 10
   let getShareNums = 0
   if (HelpAuthorFlag) {
-    $.innerInviteList = await getAuthorShareCode('d');
-    if(!$.innerInviteList[0]) $.innerInviteList = await getAuthorShareCode('d');
-    res2 = await getAuthorShareCode('d');
-    if(!res2[0]) res2 = await getAuthorShareCode('d');
+    $.innerInviteList = await getAuthorShareCode('https://raw.githubusercontent.com/smiek2221/updateTeam/master/shareCodes/wealth_island_code_one.json');
+    if(!$.innerInviteList[0]) $.innerInviteList = await getAuthorShareCode('https://gitee.com/smiek2221/updateTeam/raw/master/shareCodes/wealth_island_code_one.json');
+    res2 = await getAuthorShareCode('https://raw.githubusercontent.com/smiek2221/updateTeam/master/shareCodes/wealth_island_code.json');
+    if(!res2[0]) res2 = await getAuthorShareCode('https://gitee.com/smiek2221/updateTeam/raw/master/shareCodes/wealth_island_code.json');
     getShareNums = [...res, ...res2].length >= getShareNum ? getShareNum : [...res, ...res2].length
     $.innerInviteLists = getRandomArrayElements([...res, ...res2], [...res, ...res2].length >= getShareNum ? getShareNum : [...res, ...res2].length );
     $.InviteLists.push(...$.InviteList,...$.innerInviteList,...$.innerInviteLists);
