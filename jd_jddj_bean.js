@@ -15,8 +15,7 @@ cron "10 0 * * *" script-path=https://raw.githubusercontent.com/passerby-b/JDDJ/
 
 */
 
-
-const $ = new API("jd_jddj_bean");
+const $ = new API("jddj_bean");
 let ckPath = './jdCookie.js';//ck路径,环境变量:JDDJ_CKPATH
 let cookies = [];
 let thiscookie = '', deviceid = '';

@@ -7,10 +7,13 @@
 //boxjs订阅地址:https://gitee.com/passerby-b/javascript/raw/master/JD/passerby-b.boxjs.json
 //TG群:https://t.me/passerbyb2021
 
-[task_local]
-*/5 * * * * https://raw.githubusercontent.com/passerby-b/JDDJ/main/jddj_getPoints.js
-[Script]
-cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/passerby-b/JDDJ/main/jddj_getPoints.js,tag=京东到家鲜豆庄园收水滴
+//[task_local]
+//0 */1 * * * https://raw.githubusercontent.com/passerby-b/JDDJ/main/jddj_getPoints.js
+
+
+//[Script]
+//cron "0 */1 * * *" script-path=https://raw.githubusercontent.com/passerby-b/JDDJ/main/jddj_getPoints.js,tag=京东到家鲜豆庄园收水滴
+
 
 const $ = new API("jddj_getPoints");
 let ckPath = './jdCookie.js';//ck路径,环境变量:JDDJ_CKPATH
@@ -137,8 +140,12 @@ async function userinfo() {
             $.http.get(option).then(response => {
                 let data = JSON.parse(response.body);
                 if (data.code == 0) {
-                    nickname = data.result.userInfo.userBaseInfo.nickName;
-                    console.log("●●●" + nickname + "●●●");
+                    try {
+                        nickname = data.result.userInfo.userBaseInfo.nickName;
+                        console.log("●●●" + nickname + "●●●");
+                    } catch (error) {
+                        console.log("●●●昵称获取失败●●●");
+                    }
                 }
                 resolve();
             })
