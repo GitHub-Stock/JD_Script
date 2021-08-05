@@ -68,7 +68,7 @@ message = ""
     }
   }
   guaopencard_addSku = process.env.guaopencard_addSku5
-  if (!process.env.guaopencard_addSku5 || process.env.guaopencard_addSku5 == "false") {
+  if (!process.env.guaopencard_addSku5 || process.env.guaopencard_addSku5 == "true") {
     console.log('如需加购请设置环境变量[guaopencard_addSku5]为"true"')
   }
   $.shareUuid = 'e3b48e5703544ec094b727e3e65b6672'
