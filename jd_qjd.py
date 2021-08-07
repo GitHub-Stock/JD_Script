@@ -29,7 +29,7 @@ import time
 import json
 from urllib.parse import unquote
 cookies = ''
-qjd_zlzh = ['Your JD_User', '买买买']
+qjd_zlzh = ['jd_45a01ff067cf5', 'jd_5d4c76e468895']
 
 # Env环境设置 通知服务
 # export BARK=''                   # bark服务,苹果商店自行搜索;
