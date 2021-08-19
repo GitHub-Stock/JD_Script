@@ -24,7 +24,7 @@ const jdCookieNode = $.isNode() ? require("./jdCookie.js") : "";
 const notify = $.isNode() ? require('./sendNotify') : "";
 let cookiesArr = [], cookie = "", allMessage = "", message;
 const inviteCodes = ['d']
-let reward = process.env.JD_HEALTH_REWARD_NAME ? process.env.JD_HEALTH_REWARD_NAME : ''
+let reward = $.isNode() ? (process.env.JD_HEALTH_REWARD_NAME ? process.env.JD_HEALTH_REWARD_NAME : '') : ($.getdata('JD_HEALTH_REWARD_NAME') ? $.getdata('JD_HEALTH_REWARD_NAME') : '');
 const randomCount = $.isNode() ? 20 : 5;
 if ($.isNode()) {
   Object.keys(jdCookieNode).forEach((item) => {
@@ -319,7 +319,7 @@ function readShareCode() {
   console.log(`开始`)
   return new Promise(async resolve => {
     $.get({
-      url: `http://share.turinglabs.net/api/v3/health/query/${randomCount}/`,
+      url: `d`,
       'timeout': 10000
     }, (err, resp, data) => {
       try {
@@ -353,10 +353,6 @@ function shareCodesFormat() {
       console.log(`由于您第${$.index}个京东账号未提供shareCode,将采纳本脚本自带的助力码\n`)
       const tempIndex = $.index > inviteCodes.length ? (inviteCodes.length - 1) : ($.index - 1);
       $.newShareCodes = inviteCodes[tempIndex].split('@');
-    }
-    const readShareCodeRes = await readShareCode();
-    if (readShareCodeRes && readShareCodeRes.code === 200) {
-      $.newShareCodes = [...new Set([...$.newShareCodes, ...(readShareCodeRes.data || [])])];
     }
     console.log(`第${$.index}个京东账号将要助力的好友${JSON.stringify($.newShareCodes)}`)
     resolve();
