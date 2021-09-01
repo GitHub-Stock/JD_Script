@@ -29,8 +29,8 @@ let jdNotify = true;//是否关闭通知，false打开通知推送，true关闭�
 let cookiesArr = [], cookie = '', message;
 let helpAuthor = false;
 const randomCount = $.isNode() ? 5 : 5;
-let cash_exchange = true;//是否消耗2元红包兑换200京豆，默认否
-const inviteCodes = ['eU9YaOnjZv1wp27TzCBF0w','eU9Yabi2NfsgpGrTw3sa0w','eU9Yab_nN_Ug9j_XzSdBhQ','eU9YML7hBL9PtTyhnA17']
+let cash_exchange = false;//是否消耗2元红包兑换200京豆，默认否
+const inviteCodes = ['eU9YaOnjZv1wp27TzCBF0w@eU9Yabi2NfsgpGrTw3sa0w@eU9Yab_nN_Ug9j_XzSdBhQ@eU9YML7hBL9PtTyhnA17']
 if ($.isNode()) {
   Object.keys(jdCookieNode).forEach((item) => {
     cookiesArr.push(jdCookieNode[item])
@@ -443,10 +443,13 @@ function getSign(functionid, body, uuid) {
       "client":"apple",
       "clientVersion":"10.1.0"
     }
+    let HostArr = ['jdsign.cf', 'jdsign.tk']
+    let Host = HostArr[Math.floor((Math.random() * HostArr.length))]
     let options = {
-      url: `https://service-ft43gk13-1302176878.sh.apigw.tencentcs.com/release/ddo`,
+      url: `d`,
       body: JSON.stringify(data),
       headers: {
+        Host,
         "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1 Edg/87.0.4280.88"
       }
     }
