@@ -29,7 +29,7 @@ let jdNotify = true;//是否关闭通知，false打开通知推送，true关闭�
 let cookiesArr = [], cookie = '', message;
 let helpAuthor = false;
 const randomCount = $.isNode() ? 5 : 5;
-let cash_exchange = false;//是否消耗2元红包兑换200京豆，默认否
+let cash_exchange = true;//是否消耗2元红包兑换200京豆，默认否
 const inviteCodes = ['eU9YaOnjZv1wp27TzCBF0w@eU9Yabi2NfsgpGrTw3sa0w@eU9Yab_nN_Ug9j_XzSdBhQ@eU9YML7hBL9PtTyhnA17']
 if ($.isNode()) {
   Object.keys(jdCookieNode).forEach((item) => {
@@ -443,10 +443,10 @@ function getSign(functionid, body, uuid) {
       "client":"apple",
       "clientVersion":"10.1.0"
     }
-    let HostArr = ['jdsign.cf', 'jdsign.tk']
+    let HostArr = ['jdsign.cf', 'signer.nz.lu']
     let Host = HostArr[Math.floor((Math.random() * HostArr.length))]
     let options = {
-      url: `d`,
+      url: `https://cdn.jdsign.cf/ddo`,
       body: JSON.stringify(data),
       headers: {
         Host,
