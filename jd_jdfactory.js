@@ -42,7 +42,7 @@ if ($.isNode()) {
 } else {
   cookiesArr = [$.getdata('CookieJD'), $.getdata('CookieJD2'), ...jsonParse($.getdata('CookiesJD') || "[]").map(item => item.cookie)].filter(item => !!item);
 }
-let wantProduct = ``;//心仪商品名称
+let wantProduct = `华为礼品-自拍杆`;//心仪商品名称
 const JD_API_HOST = 'https://api.m.jd.com/client.action';
 const inviteCodes = [`d`];
 !(async () => {
