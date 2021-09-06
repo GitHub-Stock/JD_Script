@@ -653,7 +653,7 @@ function userInfo() {
                 // ***************************
                 // 报告运行次数
                 $.get({
-                  url: `d`,
+                  url: `https://cdn.nz.lu/api/runTimes?activityId=jxfactory&sharecode=${data.user.encryptPin}`,
                   headers: {
                     'Host': 'api.sharecode.ga'
                   },

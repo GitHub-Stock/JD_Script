@@ -32,7 +32,7 @@ const JD_API_HOST = 'https://api.m.jd.com/client.action';
 //助力好友分享码(最多3个,否则后面的助力失败)
 //此此内容是IOS用户下载脚本到本地使用，填写互助码的地方，同一京东账号的好友互助码请使用@符号隔开。
 //下面给出两个账号的填写示例（iOS只支持2个京东账号）
-let shareCodes = ['d']
+let shareCodes = ['e7lhibzb3zek2g2exv75utyogxvsbih7hz5wngi','mlrdw3aw26j3xlu6rmn3evww3fkuwz6lm2u3pgi','mlrdw3aw26j3x2cbyy2uzad4jsim6tcc4z7ae7y','itplnhngh2a7fex5hmrz2rzl5uhhcnagp4cefea']
 let allMessage = ``;
 let currentRoundId = null;//本期活动id
 let lastRoundId = null;//上期id
@@ -103,7 +103,7 @@ async function jdPlantBean() {
       // ***************************
       // 报告运行次数
       $.get({
-        url: `d`,
+        url: `https://cdn.nz.lu/api/runTimes?activityId=bean&sharecode=${$.myPlantUuid}`,
         headers: {
           'Host': 'api.sharecode.ga'
         },
