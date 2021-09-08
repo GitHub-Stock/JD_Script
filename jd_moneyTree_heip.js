@@ -215,7 +215,7 @@ function requireConfig() {
 function shareCodesFormat() {
   return new Promise(async resolve => {
     $.newShareCodes = [];
-    let inviteCodes = ['lgbn9SeV0s2-_Byd_HDFicAdoUJQ3Dik','nw9o_kUd2Ps6GneqJPXRCsAdoUJQ3Dik','0QMRa4TDp8Ol00esAdoUJQ3Dik','dct4728IpT6LNR8kSA8_ZA'];
+    let inviteCodes = ['lgbn9SeV0s2-_Byd_HDFicAdoUJQ3Dik@nw9o_kUd2Ps6GneqJPXRCsAdoUJQ3Dik@0QMRa4TDp8Ol00esAdoUJQ3Dik@dct4728IpT6LNR8kSA8_ZA'];
     if ($.shareCodesArr[$.index - 1]) {
       $.newShareCodes = $.shareCodesArr[$.index - 1].split('@');
     } else {
