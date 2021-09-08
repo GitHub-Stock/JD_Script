@@ -28,7 +28,7 @@ const $ = new Env('闪购盲盒');
 const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
 let appId = '1EFRXxg' , homeDataFunPrefix = 'interact_template', collectScoreFunPrefix = 'harmony', message = ''
 let lotteryResultFunPrefix = homeDataFunPrefix, browseTime = 6
-const inviteCodes = ['T0225KkcRBtI9VWBdhryk6RccQCjVQmoaT5kRrbA','T0225KkcRUodplPRdR7ynP8DcQCjVQmoaT5kRrbA','T0225KkcRU1MpF3RJ0v2kqNYJwCjVQmoaT5kRrbA','T0205KkcHExKlxe-ZEiAw4liCjVQmoaT5kRrbA'];
+const inviteCodes = ['T0225KkcRBtI9VWBdhryk6RccQCjVQmoaT5kRrbA@T0225KkcRUodplPRdR7ynP8DcQCjVQmoaT5kRrbA@T0225KkcRU1MpF3RJ0v2kqNYJwCjVQmoaT5kRrbA@T0205KkcHExKlxe-ZEiAw4liCjVQmoaT5kRrbA'];
 const randomCount = $.isNode() ? 20 : 5;
 const notify = $.isNode() ? require('./sendNotify') : '';
 let merge = {}
