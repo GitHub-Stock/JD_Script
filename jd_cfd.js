@@ -152,11 +152,11 @@ async function cfd() {
 
     // 寻宝
     console.log(`寻宝`)
-    let XBDetail = beginInfo.XbStatus.XBDetail.filter((x) => x.ddwColdEndTm === 0 && x.dwRemainCnt === 3)
+    let XBDetail = beginInfo.XbStatus.XBDetail.filter((x) => x.dwRemainCnt !== 1)
     if (XBDetail.length !== 0) {
       console.log(`开始寻宝`)
-      for (let key of Object.keys(beginInfo.XbStatus.XBDetail)) {
-        let vo = beginInfo.XbStatus.XBDetail[key]
+      for (let key of Object.keys(XBDetail)) {
+        let vo = XBDetail[key]
         await $.wait(2000)
         await TreasureHunt(vo.strIndex)
       }
@@ -1644,7 +1644,7 @@ function readShareCode() {
   console.log(`开始`)
   return new Promise(async resolve => {
     $.get({
-      url: `d`,
+      url: `http://share.turinglabs.net/api/v3/jxbfd/query/${randomCount}/`,
       'timeout': 10000
     }, (err, resp, data) => {
       try {
