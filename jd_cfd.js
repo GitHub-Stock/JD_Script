@@ -35,7 +35,7 @@ const jdCookieNode = $.isNode() ? require("./jdCookie.js") : "";
 $.showLog = $.getdata("cfd_showLog") ? $.getdata("cfd_showLog") === "true" : false;
 $.notifyTime = $.getdata("cfd_notifyTime");
 $.result = [];
-$.shareCodes = [];
+$.shareCodes = ['DD7FEAA72A19B8B397F7F53CAB59ABF651EA67BB6ECA025819F809EC8AD586F4','A096C36F51ED476D8394DBA3A477F337B4B510F9DE2855BE90797D048EC728E8','7DE8E2A5F5B71FE4FA4B7E8AF10263228F5A0847E9A2E6E054930859BAA44B1F','775E7F312DAF4DAF58E512A992E871732C32C7A5BF9E1B4525DCF51423AE4FFB'];
 let cookiesArr = [], cookie = '', token = '';
 let UA, UAInfo = {}
 let nowTimes;

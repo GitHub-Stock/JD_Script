@@ -29,7 +29,7 @@ let ADD_CART = true
 ADD_CART = $.isNode() ? (process.env.PURCHASE_SHOPS ? process.env.PURCHASE_SHOPS : ADD_CART) : ($.getdata("ADD_CART") ? $.getdata("ADD_CART") : ADD_CART);
 // 加入购物车开关，与东东小窝共享
 
-let inviteCodes = ['d']
+let inviteCodes = ['dc63afef5e084bc994e055ecd33183b8','19cd1727422c4d1f8137c4d47aa20f71','62d595871cd649208a2ac32341b53531','406b15ea8eac4ddaad5210b5586b6d53']
 
 if ($.isNode()) {
   Object.keys(jdCookieNode).forEach((item) => {
