@@ -44,10 +44,10 @@ const BASE_URL = 'https://m.jingxi.com/cubeactive/steprewardv3'
       '活动入口：京喜app-》我的-》京喜领88元红包\n' +
       '助力逻辑：先自己京东账号相互助力，如有剩余助力机会，则助力作者\n' +
       '温馨提示：如提示助力火爆，可尝试寻找京东客服')
-  let res = []
-  res = await getAuthorShareCode('d')
+  let res = ['ELBbczLjOCiTpJ6Zgm1LyWbsEuEQ4lsBSDE4oJu1nbFt30HhMcf0BoutEhqtzWLz','ELBbczLjOCiTpJ6Zgm1LyQVCfF9lmJMA0WDU7r52FlSaquiSX-Kd_lBugMhEDNS1','ELBbczLjOCiTpJ6Zgm1LyTmQwrRCinNJjC1V0bYZ3SgSY5d6fGhF9m_8b5m6khnZ','ELBbczLjOCiTpJ6Zgm1LyR1vsDpAfqtA-fi7aFnZb0_1joWZCeu0ztPaU54GdCzl']
+  res = await getAuthorShareCode('ELBbczLjOCiTpJ6Zgm1LyWbsEuEQ4lsBSDE4oJu1nbFt30HhMcf0BoutEhqtzWLz','ELBbczLjOCiTpJ6Zgm1LyQVCfF9lmJMA0WDU7r52FlSaquiSX-Kd_lBugMhEDNS1','ELBbczLjOCiTpJ6Zgm1LyTmQwrRCinNJjC1V0bYZ3SgSY5d6fGhF9m_8b5m6khnZ','ELBbczLjOCiTpJ6Zgm1LyR1vsDpAfqtA-fi7aFnZb0_1joWZCeu0ztPaU54GdCzl')
   if (!res) {
-    $.http.get({url: 'd'}).then((resp) => {}).catch((e) => $.log('刷新CDN异常', e));
+    $.http.get({url: 'http://www.baidu.com'}).then((resp) => {}).catch((e) => $.log('刷新CDN异常', e));
     await $.wait(1000)
     res = await getAuthorShareCode('d')
   }

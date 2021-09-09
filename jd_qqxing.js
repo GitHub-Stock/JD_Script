@@ -15,7 +15,7 @@ const randomCount = $.isNode() ? 20 : 5;
 const notify = $.isNode() ? require('./sendNotify') : '';
 let merge = {}
 let codeList = []
-Exchange = true;
+Exchange = false;
 //IOS等用户直接用NobyDa的jd cookie
 let cookiesArr = [],
     cookie = '';

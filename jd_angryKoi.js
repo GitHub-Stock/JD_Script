@@ -8,7 +8,7 @@ TG学习交流群：https://t.me/cdles
 const $ = new Env("愤怒的锦鲤")
 const JD_API_HOST = 'https://api.m.jd.com/client.action';
 const ua = `jdltapp;iPhone;3.1.0;${Math.ceil(Math.random()*4+10)}.${Math.ceil(Math.random()*4)};${randomString(40)}`
-var kois = process.env.kois ?? "jd_45a01ff067cf5"
+var kois = process.env.kois ?? "jd_45a01ff067cf5@jd_5d4c76e468895@jd_5cea967a26dbc@jd_5cea967a26dbc"
 let cookiesArr = []
 var helps = [];
 var tools= []
