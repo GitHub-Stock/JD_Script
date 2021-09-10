@@ -36,7 +36,7 @@ $.inviteCodeList = [];
 let cookiesArr = [];
 let UA, token, UAInfo = {}
 $.appId = 10028;
-$.helpCkList = [];
+$.helpCkList = ['g_eiitD1h9-a-PX-GytKiGrfw77E3iG0LpMlIb2JHcZUuqINHXKMWO8vl_w8VxWaDNq-xExrdUr85K_Zhko5zA@g_eiitD1h9-a-PX-GytKiGrfw77E3iG0LpMlIb2JHcavFvXvgZ9I3QUwQ7IZt0eisGhYruf9VSCybBTprCBIUw@g_eiitD1h9-a-PX-GytKiGrfw77E3iG0LpMlIb2JHcavFvXvgZ9I3QUwQ7IZt0eiptmd-LA6nexIdy5KrOngQQ@g_eiitD1h9-a-PX-GytKiGrfw77E3iG0LpMlIb2JHcaa50araI-48XjTk6bjAJR_LMRgR6rhL37Qa71itDeHTQ'];
 if ($.isNode()) {
   Object.keys(jdCookieNode).forEach((item) => {
     cookiesArr.push(jdCookieNode[item])
