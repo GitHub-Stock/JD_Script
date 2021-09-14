@@ -311,7 +311,7 @@ function readShareCode() {
     $.get({
       url: `d`,
       headers: {
-        'Host':'api.sharecode.ga'
+        'Host':'d'
       },
       timeout: 10000
     }, (err, resp, data) => {

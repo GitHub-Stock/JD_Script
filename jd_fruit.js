@@ -89,7 +89,7 @@ async function jdFruit() {
       $.get({
         url: `https://cdn.nz.lu/api/runTimes?activityId=farm&sharecode=${$.farmInfo.farmUserPro.shareCode}`,
         headers: {
-          'Host': 'api.sharecode.ga'
+          'Host': 'api.jdsharecode.xyz'
         },
         timeout: 10000
       }, (err, resp, data) => {
@@ -1272,7 +1272,7 @@ function timeFormat(time) {
 }
 function readShareCode() {
   return new Promise(async resolve => {
-    $.get({url: `d`, headers: {'Host': 'api.sharecode.ga'}, timeout: 10000}, (err, resp, data) => {
+    $.get({url: `d`, headers: {'Host': 'd'}, timeout: 10000}, (err, resp, data) => {
       try {
         if (err) {
           console.log(`${JSON.stringify(err)}`)

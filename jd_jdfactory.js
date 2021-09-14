@@ -141,7 +141,7 @@ async function algorithm() {
                 if (wantProduct) {
                   console.log(`BoxJs或环境变量提供的心仪商品：${wantProduct}\n`);
                   await jdfactory_getProductList(true);
-                  let wantProductSkuId = '华为礼品-自拍杆';
+                  let wantProductSkuId = '';
                   for (let item of $.canMakeList) {
                     if (item.name.indexOf(wantProduct) > - 1) {
                       totalScore = item['fullScore'] * 1;
@@ -617,7 +617,7 @@ function jdfactory_getHomeData() {
 function readShareCode() {
   console.log(`开始`)
   return new Promise(async resolve => {
-    $.get({url: `d`, headers:{'Host':'api.sharecode.ga'}, timeout: 10000}, (err, resp, data) => {
+    $.get({url: `d`, headers:{'Host':'d'}, timeout: 10000}, (err, resp, data) => {
       try {
         if (err) {
           console.log(`${JSON.stringify(err)}`)

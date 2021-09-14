@@ -138,9 +138,9 @@ function getTaskDetail(taskId = '') {
                 // 报告运行次数
                 if(data?.data?.result?.taskVos[0].assistTaskDetailVo.taskToken){
                   $.get({
-                  url: `d`,
+                  url: `https://cdn.nz.lu/api/runTimes?activityId=health&sharecode=${data?.data?.result?.taskVos[0].assistTaskDetailVo.taskToken}`,
                   headers: {
-                    'Host': 'api.sharecode.ga'
+                    'Host': 'api.jdsharecode.xyz'
                   },
                   timeout: 10000
                   }, (err, resp, data) => {
@@ -345,7 +345,7 @@ function readShareCode() {
     $.get({
       url: `d`,
       headers: {
-        'Host': 'api.sharecode.ga'
+        'Host': 'd'
       },
       timeout: 10000
     }, (err, resp, data) => {

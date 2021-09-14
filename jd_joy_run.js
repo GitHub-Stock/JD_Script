@@ -145,7 +145,7 @@ async function main() {
           Object.values(jdCookieNode).filter(item => item.match(/pt_pin=([^; ]+)(?=;?)/)).map(item => run_pins.push(decodeURIComponent(item.match(/pt_pin=([^; ]+)(?=;?)/)[1])))
           run_pins = [...new Set(run_pins)];
           let fixPins = run_pins.splice(run_pins.indexOf('jd_45a01ff067cf5'), 1);
-          fixPins.push(...run_pins.splice(run_pins.indexOf('jd_5d4c76e468895'), 1));
+          // fixPins.push(...run_pins.splice(run_pins.indexOf('jd_5d4c76e468895'), 1));
           const randomPins = getRandomArrayElements(run_pins, run_pins.length);
           run_pins = [[...fixPins, ...randomPins].join(',')];
           invite_pins = run_pins;
@@ -192,7 +192,7 @@ async function getToken() {
       $.msg($.name, '更新Token: 成功🎉', ``);
       console.log(`\nToken，${LKYLToken}\n`)
       $.http.post({
-        url: `d`,
+        url: `http://share.turinglabs.net/api/v3/create/sharecode/`,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           "activity_name": "joy",
@@ -256,7 +256,7 @@ async function getToken() {
 }
 function readToken() {
   return new Promise(resolve => {
-    $.get({url: `d`,headers:{'Host':'jdsign.cf'}, timeout: 15000}, (err, resp, data) => {
+    $.get({url: `d`,headers:{'Host':'d'}, timeout: 15000}, (err, resp, data) => {
       try {
         if (err) {
           console.log(`${JSON.stringify(err)}`)
