@@ -141,7 +141,7 @@ async function algorithm() {
                 if (wantProduct) {
                   console.log(`BoxJs或环境变量提供的心仪商品：${wantProduct}\n`);
                   await jdfactory_getProductList(true);
-                  let wantProductSkuId = '';
+                  let wantProductSkuId = '华为礼品-自拍杆';
                   for (let item of $.canMakeList) {
                     if (item.name.indexOf(wantProduct) > - 1) {
                       totalScore = item['fullScore'] * 1;
