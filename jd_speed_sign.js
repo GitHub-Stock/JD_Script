@@ -87,15 +87,15 @@ async function jdGlobal() {
     await apTaskList()
     await wheelsHome()
 
-    await signInit()
-    await sign()
+    // await signInit()
+    // await sign()
     await invite()
     await invite2()
     $.score = 0
     $.total = 0
     await taskList()
     await queryJoy()
-    await signInit()
+    // await signInit()
     await cash()
     await showMsg()
   } catch (e) {
@@ -710,7 +710,7 @@ function invite() {
     "4owjAz67zDRTb4gH8/kCHLPhAH7LF46RtHCaQrYjSZU=",
     "WttbYf55v51BDVLVVCnQNZCJOrmWSGIhoCARQF5tGqc=",
 	"SfmCWPIR1BhAE7lJg17saA=="
-  ][Math.floor((Math.random() * 2))]
+  ][Math.floor((Math.random() * 3))]
   var headers = {
     'Host': 'api.m.jd.com',
     'accept': 'application/json, text/plain, */*',
