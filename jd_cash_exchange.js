@@ -11,7 +11,7 @@ let exchangeAccounts = {
     "jd_45a01ff067cf5": 10,//十元
     "jd_5d4c76e468895": 10,//十元
 	"jd_5cea967a26dbc": 10,//十元
-	"jd_5d4c76e468895": 10,//十元
+	"jd_lbcRsYtbDgNX": 10,//十元
 }
 
 !(async () => {
