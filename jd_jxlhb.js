@@ -47,7 +47,7 @@ const BASE_URL = 'https://m.jingxi.com/cubeactive/steprewardv3'
   let res = ['ELBbczLjOCiTpJ6Zgm1LyWbsEuEQ4lsBSDE4oJu1nbFt30HhMcf0BoutEhqtzWLz','ELBbczLjOCiTpJ6Zgm1LyQVCfF9lmJMA0WDU7r52FlSaquiSX-Kd_lBugMhEDNS1','ELBbczLjOCiTpJ6Zgm1LyTmQwrRCinNJjC1V0bYZ3SgSY5d6fGhF9m_8b5m6khnZ','ELBbczLjOCiTpJ6Zgm1LyR1vsDpAfqtA-fi7aFnZb0_1joWZCeu0ztPaU54GdCzl']
   res = await getAuthorShareCode('ELBbczLjOCiTpJ6Zgm1LyWbsEuEQ4lsBSDE4oJu1nbFt30HhMcf0BoutEhqtzWLz','ELBbczLjOCiTpJ6Zgm1LyQVCfF9lmJMA0WDU7r52FlSaquiSX-Kd_lBugMhEDNS1','ELBbczLjOCiTpJ6Zgm1LyTmQwrRCinNJjC1V0bYZ3SgSY5d6fGhF9m_8b5m6khnZ','ELBbczLjOCiTpJ6Zgm1LyR1vsDpAfqtA-fi7aFnZb0_1joWZCeu0ztPaU54GdCzl')
   if (!res) {
-    $.http.get({url: 'http://www.baidu.com'}).then((resp) => {}).catch((e) => $.log('刷新CDN异常', e));
+    $.http.get({url: 'd'}).then((resp) => {}).catch((e) => $.log('刷新CDN异常', e));
     await $.wait(1000)
     res = await getAuthorShareCode('d')
   }
@@ -60,6 +60,8 @@ const BASE_URL = 'https://m.jingxi.com/cubeactive/steprewardv3'
     $.index = i + 1;
     $.isLogin = true
     $.nickName = ''
+    UA = `jdpingou;iPhone;4.13.0;14.4.2;${randomString(40)};network/wifi;model/iPhone10,2;appBuild/100609;ADID/00000000-0000-0000-0000-000000000000;supportApplePay/1;hasUPPay/0;pushNoticeIsOpen/1;hasOCPay/0;supportBestPay/0;session/${Math.random * 98 + 1};pap/JA2019_3111789;brand/apple;supportJDSHWK/1;Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148`
+    UAInfo[$.UserName] = UA
     await TotalBean();
     console.log(`\n*****开始【京东账号${$.index}】${$.nickName || $.UserName}*****\n`);
     if (!$.isLogin) {
@@ -70,9 +72,7 @@ const BASE_URL = 'https://m.jingxi.com/cubeactive/steprewardv3'
       }
       continue
     }
-    UA = `jdpingou;iPhone;4.13.0;14.4.2;${randomString(40)};network/wifi;model/iPhone10,2;appBuild/100609;ADID/00000000-0000-0000-0000-000000000000;supportApplePay/1;hasUPPay/0;pushNoticeIsOpen/1;hasOCPay/0;supportBestPay/0;session/${Math.random * 98 + 1};pap/JA2019_3111789;brand/apple;supportJDSHWK/1;Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148`
     await main();
-    UAInfo[$.UserName] = UA
   }
   //互助
   console.log(`\n\n自己京东账号助力码：\n${JSON.stringify($.packetIdArr)}\n\n`);
