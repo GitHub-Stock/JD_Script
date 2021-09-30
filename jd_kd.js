@@ -26,7 +26,7 @@ const $ = new Env('京东快递签到');
 const notify = $.isNode() ? require('./sendNotify') : '';
 //Node.js用户请在jdCookie.js处填写京东ck;
 const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
-let jdNotify = false;//是否关闭通知，false打开通知推送，true关闭通知推送
+let jdNotify = true;//是否关闭通知，false打开通知推送，true关闭通知推送
 const randomCount = $.isNode() ? 20 : 5;
 //IOS等用户直接用NobyDa的jd cookie
 let cookiesArr = [], cookie = '', message, allMsg = '';
@@ -115,19 +115,22 @@ function userSignIn() {
   })
 }
 function taskUrl() {
+  let t = +new Date()
   return {
     url: `https://lop-proxy.jd.com/jiFenApi/signInAndGetReward`,
     body: '[{"userNo":"$cooMrdGatewayUid$"}]',
     headers: {
+      'uuid': `${t}${t * 2}`,
       'Host': 'lop-proxy.jd.com',
       'lop-dn': 'jingcai.jd.com',
       'biz-type': 'service-monitor',
       'app-key': 'jexpress',
       'access': 'H5',
       'content-type': 'application/json;charset=utf-8',
+      'accept-encoding': 'gzip, deflate, br',
       'clientinfo': '{"appName":"jingcai","client":"m"}',
       'accept': 'application/json, text/plain, */*',
-      'jexpress-report-time': '1607330170578',
+      'jexpress-report-time': t,
       'x-requested-with': 'XMLHttpRequest',
       'source-client': '2',
       'appparams': '{"appid":158,"ticket_type":"m"}',
@@ -137,8 +140,9 @@ function taskUrl() {
       'sec-fetch-mode': 'cors',
       'sec-fetch-dest': 'empty',
       'referer': 'https://jingcai-h5.jd.com/',
-      'accept-language': 'zh-CN,zh;q=0.9',
+      'accept-language': 'zh-CN,zh-Hans;q=0.9',
       "Cookie": cookie,
+      'app-key': 'jexpress',
       "User-Agent": $.isNode() ? (process.env.JD_USER_AGENT ? process.env.JD_USER_AGENT : (require('./USER_AGENTS').USER_AGENT)) : ($.getdata('JDUA') ? $.getdata('JDUA') : "jdapp;iPhone;9.4.4;14.3;network/4g;Mozilla/5.0 (iPhone; CPU iPhone OS 14_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1"),
     }
   }
