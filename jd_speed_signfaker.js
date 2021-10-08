@@ -675,10 +675,10 @@ function taskGetUrl(function_id, body) {
 function invite2() {
   let t = +new Date()
   let inviterId = [
-    "5V7vHE23qh2EkdBHXRFDuA==",
-    "4AVQao+eH8Q8kvmXnWmkG8ef/fNr5fdejnD9+9Ugbec=",
-    "jbGBRBPo5DmwB9ntTCSVOGXuh1YQyccCuZpWwb3PlIc="
-  ][Math.floor((Math.random() * 3))]
+    "TtbowzJ6Oqu27TWsRVRPBefEqtwmdf5GaXqc4F52HaM=",
+    "4owjAz67zDRTb4gH8/kCHLPhAH7LF46RtHCaQrYjSZU=",
+    "WttbYf55v51BDVLVVCnQNZCJOrmWSGIhoCARQF5tGqc="
+  ][Math.floor((Math.random() * 5))]
   let headers = {
     'Host': 'api.m.jd.com',
     'accept': 'application/json, text/plain, */*',
@@ -705,10 +705,10 @@ function invite2() {
 function invite() {
   let t = +new Date()
   let inviterId = [
-    "5V7vHE23qh2EkdBHXRFDuA==",
-    "jbGBRBPo5DmwB9ntTCSVOGXuh1YQyccCuZpWwb3PlIc=",
-    "wXX9SjXOdYMWe5Ru/1+x9A=="
-  ][Math.floor((Math.random() * 3))]
+    "TtbowzJ6Oqu27TWsRVRPBefEqtwmdf5GaXqc4F52HaM=",
+    "4owjAz67zDRTb4gH8/kCHLPhAH7LF46RtHCaQrYjSZU=",
+    "WttbYf55v51BDVLVVCnQNZCJOrmWSGIhoCARQF5tGqc="
+  ][Math.floor((Math.random() * 6))]
   var headers = {
     'Host': 'api.m.jd.com',
     'accept': 'application/json, text/plain, */*',
