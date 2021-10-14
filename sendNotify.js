@@ -9,7 +9,7 @@
  * @param params 某些推送通知方式点击弹窗可跳转, 例：{ url: 'https://abc.com' }
  * @param author 作者仓库等信息  例：`本通知 By：https://github.com/whyour/qinglong`
  */
- //详细说明参考 https://github.com/ccwav/QLScript2.
+//详细说明参考 https://github.com/ccwav/QLScript2.
 const querystring = require('querystring');
 const exec = require('child_process').exec;
 const $ = new Env();
@@ -86,6 +86,20 @@ let PUSH_PLUS_TOKEN = '';
 let PUSH_PLUS_USER = '';
 let PUSH_PLUS_TOKEN_hxtrip = '';
 let PUSH_PLUS_USER_hxtrip = '';
+
+// ======================================= WxPusher 通知设置区域 ===========================================
+// 此处填你申请的 appToken. 官方文档：https://wxpusher.zjiecode.com/docs
+// WP_APP_TOKEN 可在管理台查看: https://wxpusher.zjiecode.com/admin/main/app/appToken
+// WP_TOPICIDS 群发, 发送目标的 topicId, 以 ; 分隔! 使用 WP_UIDS 单发的时候, 可以不传
+// WP_UIDS 发送目标的 uid, 以 ; 分隔。注意 WP_UIDS 和 WP_TOPICIDS 可以同时填写, 也可以只填写一个。
+// WP_URL 原文链接, 可选参数
+let WP_APP_TOKEN = "";
+let WP_TOPICIDS = "";
+let WP_UIDS = "";
+let WP_URL = "";
+
+let WP_APP_TOKEN_ONE = "";
+let WP_UIDS_ONE = "";
 /**
  * sendNotify 推送通知功能
  * @param text 通知头
@@ -97,7 +111,6 @@ let PUSH_PLUS_USER_hxtrip = '';
 let PushErrorTime = 0;
 let strTitle = "";
 let ShowRemarkType = "1";
-let Notify_CompToGroup2 = "";
 let Notify_NoCKFalse = "false";
 let Notify_NoLoginSuccess = "false";
 let UseGroupNotify = 1;
@@ -117,6 +130,18 @@ if (Fileexists) {
 		TempCK = JSON.parse(TempCK);
 	}
 }
+let strUidFile = './CK_WxPusherUid.json';
+let UidFileexists = fs.existsSync(strUidFile);
+let TempCKUid = [];
+if (UidFileexists) {
+	console.log("检测到WxPusherUid文件，载入...");
+	TempCKUid = fs.readFileSync(strUidFile, 'utf-8');
+	if (TempCKUid) {
+		TempCKUid = TempCKUid.toString();
+		TempCKUid = JSON.parse(TempCKUid);
+	}
+}
+
 let tempAddCK = {};
 let boolneedUpdate = false;
 let strCustom = "";
@@ -153,7 +178,7 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 		PUSH_PLUS_TOKEN_hxtrip = '';
 		PUSH_PLUS_USER_hxtrip = '';
 		Notify_CKTask = "";
-
+		
 		//变量开关
 		var Use_serverNotify = true;
 		var Use_pushPlusNotify = true;
@@ -165,12 +190,12 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 		var Use_iGotNotify = true;
 		var Use_gobotNotify = true;
 		var Use_pushPlushxtripNotify = true;
-		if (process.env.NOTIFY_COMPTOGROUP2) {
-			Notify_CompToGroup2 = process.env.NOTIFY_COMPTOGROUP2;
-		}
+		var Use_WxPusher = true;
+
 		if (process.env.NOTIFY_NOCKFALSE) {
 			Notify_NoCKFalse = process.env.NOTIFY_NOCKFALSE;
 		}
+		strAuthor="";
 		if (process.env.NOTIFY_AUTHOR) {
 			strAuthor = process.env.NOTIFY_AUTHOR;
 		}
@@ -212,33 +237,23 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 			return;
 		}
 
-		//检查脚本名称是否需要通知到Group2,Group2读取原环境配置的变量名后加2的值.例如: QYWX_AM2
-		const notifyGroup2List = process.env.NOTIFY_GROUP2_LIST ? process.env.NOTIFY_GROUP2_LIST.split('&') : [];
-		const titleIndex2 = notifyGroup2List.findIndex((item) => item === text);
-		const notifyGroup3List = process.env.NOTIFY_GROUP3_LIST ? process.env.NOTIFY_GROUP3_LIST.split('&') : [];
-		const titleIndexGp3 = notifyGroup3List.findIndex((item) => item === text);
-		const notifyGroup4List = process.env.NOTIFY_GROUP4_LIST ? process.env.NOTIFY_GROUP4_LIST.split('&') : [];
-		const titleIndexGp4 = notifyGroup4List.findIndex((item) => item === text);
-		const notifyGroup5List = process.env.NOTIFY_GROUP5_LIST ? process.env.NOTIFY_GROUP5_LIST.split('&') : [];
-		const titleIndexGp5 = notifyGroup5List.findIndex((item) => item === text);
-
 		if (text.indexOf("已可领取") != -1) {
 			if (text.indexOf("农场") != -1) {
-				strTitle = "东东农场";
+				strTitle = "东东农场领取";
 			} else {
-				strTitle = "东东萌宠";
+				strTitle = "东东萌宠领取";
 			}
 		}
 		if (text.indexOf("汪汪乐园养joy") != -1) {
-			strTitle = "汪汪乐园养joy";
+			strTitle = "汪汪乐园养joy领取";
 		}
 
 		if (text == "京喜工厂") {
 			if (desp.indexOf("元造进行兑换") != -1) {
-				strTitle = "京喜工厂";
+				strTitle = "京喜工厂领取";
 			}
 		}
-		strTitle
+
 		if (text.indexOf("任务") != -1 && (text.indexOf("新增") != -1 || text.indexOf("删除") != -1)) {
 			strTitle = "脚本任务更新";
 		}
@@ -250,12 +265,8 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 				console.log(`${text} 在领取信息黑名单中，已跳过推送`);
 				return;
 			}
-			const notifyCompToGroup2 = Notify_CompToGroup2 ? Notify_CompToGroup2.split('&') : [];
-			titleIndex = notifyCompToGroup2.findIndex((item) => item === strTitle);
-			if (titleIndex !== -1) {
-				console.log(`${strTitle}领取信息推送至群组2`);
-				UseGroupNotify = 2;
-			}
+		} else {
+			strTitle = text;
 		}
 
 		if (Notify_NoLoginSuccess == "true") {
@@ -265,21 +276,37 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 			}
 		}
 
+		//检查脚本名称是否需要通知到Group2,Group2读取原环境配置的变量名后加2的值.例如: QYWX_AM2
+		const notifyGroup2List = process.env.NOTIFY_GROUP2_LIST ? process.env.NOTIFY_GROUP2_LIST.split('&') : [];
+		const titleIndex2 = notifyGroup2List.findIndex((item) => item === strTitle);
+		const notifyGroup3List = process.env.NOTIFY_GROUP3_LIST ? process.env.NOTIFY_GROUP3_LIST.split('&') : [];
+		const titleIndexGp3 = notifyGroup3List.findIndex((item) => item === strTitle);
+		const notifyGroup4List = process.env.NOTIFY_GROUP4_LIST ? process.env.NOTIFY_GROUP4_LIST.split('&') : [];
+		const titleIndexGp4 = notifyGroup4List.findIndex((item) => item === strTitle);
+		const notifyGroup5List = process.env.NOTIFY_GROUP5_LIST ? process.env.NOTIFY_GROUP5_LIST.split('&') : [];
+		const titleIndexGp5 = notifyGroup5List.findIndex((item) => item === strTitle);
+		const notifyGroup6List = process.env.NOTIFY_GROUP6_LIST ? process.env.NOTIFY_GROUP6_LIST.split('&') : [];
+		const titleIndexGp6 = notifyGroup6List.findIndex((item) => item === strTitle);
+
 		if (titleIndex2 !== -1) {
-			console.log(`${text} 在群组2推送名单中，初始化群组推送`);
+			console.log(`${strTitle} 在群组2推送名单中，初始化群组推送`);
 			UseGroupNotify = 2;
 		}
 		if (titleIndexGp3 !== -1) {
-			console.log(`${text} 在群组3推送名单中，初始化群组推送`);
+			console.log(`${strTitle} 在群组3推送名单中，初始化群组推送`);
 			UseGroupNotify = 3;
 		}
 		if (titleIndexGp4 !== -1) {
-			console.log(`${text} 在群组4推送名单中，初始化群组推送`);
+			console.log(`${strTitle} 在群组4推送名单中，初始化群组推送`);
 			UseGroupNotify = 4;
 		}
 		if (titleIndexGp5 !== -1) {
-			console.log(`${text} 在群组5推送名单中，初始化群组推送`);
+			console.log(`${strTitle} 在群组5推送名单中，初始化群组推送`);
 			UseGroupNotify = 5;
+		}
+		if (titleIndexGp6 !== -1) {
+			console.log(`${strTitle} 在群组6推送名单中，初始化群组推送`);
+			UseGroupNotify = 6;
 		}
 		if (process.env.NOTIFY_CUSTOMNOTIFY) {
 			strCustom = process.env.NOTIFY_CUSTOMNOTIFY;
@@ -290,7 +317,7 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 			for (var Tempj in strCustomArr) {
 				strCustomTempArr = strCustomArr[Tempj].split("&");
 				if (strCustomTempArr.length > 1) {
-					if (text == strCustomTempArr[0]) {
+					if (strTitle == strCustomTempArr[0]) {
 						console.log("检测到自定义设定,开始执行配置...");
 						if (strCustomTempArr[1] == "组1") {
 							console.log("自定义设定强制使用组1配置通知...");
@@ -308,9 +335,13 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 							console.log("自定义设定强制使用组4配置通知...");
 							UseGroupNotify = 4;
 						}
-						if (strCustomTempArr[5] == "组5") {
+						if (strCustomTempArr[1] == "组5") {
 							console.log("自定义设定强制使用组5配置通知...");
 							UseGroupNotify = 5;
+						}
+						if (strCustomTempArr[1] == "组6") {
+							console.log("自定义设定强制使用组6配置通知...");
+							UseGroupNotify = 6;
 						}
 
 						if (strCustomTempArr.length > 2) {
@@ -369,6 +400,11 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 									Use_gobotNotify = true;
 									console.log("自定义设定启用go-cqhttp进行通知...");
 									break;
+								case "WxPusher":
+									Use_WxPusher = true;
+									console.log("自定义设定启用WxPusher进行通知...");
+									break;
+
 								}
 							}
 
@@ -399,6 +435,21 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 				SCKEY = process.env.PUSH_KEY;
 			}
 
+			if (process.env.WP_APP_TOKEN && Use_WxPusher) {
+				WP_APP_TOKEN = process.env.WP_APP_TOKEN;
+			}
+
+			if (process.env.WP_TOPICIDS && Use_WxPusher) {
+				WP_TOPICIDS = process.env.WP_TOPICIDS;
+			}
+
+			if (process.env.WP_UIDS && Use_WxPusher) {
+				WP_UIDS = process.env.WP_UIDS;
+			}
+
+			if (process.env.WP_URL && Use_WxPusher) {
+				WP_URL = process.env.WP_URL;
+			}
 			if (process.env.BARK_PUSH && Use_BarkNotify) {
 				if (process.env.BARK_PUSH.indexOf('https') > -1 || process.env.BARK_PUSH.indexOf('http') > -1) {
 					//兼容BARK自建用户
@@ -458,7 +509,7 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 			if (process.env.PUSH_PLUS_USER && Use_pushPlusNotify) {
 				PUSH_PLUS_USER = process.env.PUSH_PLUS_USER;
 			}
-			
+
 			if (process.env.PUSH_PLUS_TOKEN_hxtrip && Use_pushPlushxtripNotify) {
 				PUSH_PLUS_TOKEN_hxtrip = process.env.PUSH_PLUS_TOKEN_hxtrip;
 			}
@@ -484,6 +535,21 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 				SCKEY = process.env.PUSH_KEY2;
 			}
 
+			if (process.env.WP_APP_TOKEN2 && Use_WxPusher) {
+				WP_APP_TOKEN = process.env.WP_APP_TOKEN2;
+			}
+
+			if (process.env.WP_TOPICIDS2 && Use_WxPusher) {
+				WP_TOPICIDS = process.env.WP_TOPICIDS2;
+			}
+
+			if (process.env.WP_UIDS2 && Use_WxPusher) {
+				WP_UIDS = process.env.WP_UIDS2;
+			}
+
+			if (process.env.WP_URL2 && Use_WxPusher) {
+				WP_URL = process.env.WP_URL2;
+			}
 			if (process.env.BARK_PUSH2 && Use_BarkNotify) {
 				if (process.env.BARK_PUSH2.indexOf('https') > -1 || process.env.BARK_PUSH2.indexOf('http') > -1) {
 					//兼容BARK自建用户
@@ -538,7 +604,7 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 			if (process.env.PUSH_PLUS_USER2 && Use_pushPlusNotify) {
 				PUSH_PLUS_USER = process.env.PUSH_PLUS_USER2;
 			}
-			
+
 			if (process.env.PUSH_PLUS_TOKEN_hxtrip2 && Use_pushPlushxtripNotify) {
 				PUSH_PLUS_TOKEN_hxtrip = process.env.PUSH_PLUS_TOKEN_hxtrip2;
 			}
@@ -562,6 +628,22 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 
 			if (process.env.PUSH_KEY3 && Use_serverNotify) {
 				SCKEY = process.env.PUSH_KEY3;
+			}
+
+			if (process.env.WP_APP_TOKEN3 && Use_WxPusher) {
+				WP_APP_TOKEN = process.env.WP_APP_TOKEN3;
+			}
+
+			if (process.env.WP_TOPICIDS3 && Use_WxPusher) {
+				WP_TOPICIDS = process.env.WP_TOPICIDS3;
+			}
+
+			if (process.env.WP_UIDS3 && Use_WxPusher) {
+				WP_UIDS = process.env.WP_UIDS3;
+			}
+
+			if (process.env.WP_URL3 && Use_WxPusher) {
+				WP_URL = process.env.WP_URL3;
 			}
 
 			if (process.env.BARK_PUSH3 && Use_BarkNotify) {
@@ -618,7 +700,7 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 			if (process.env.PUSH_PLUS_USER3 && Use_pushPlusNotify) {
 				PUSH_PLUS_USER = process.env.PUSH_PLUS_USER3;
 			}
-			
+
 			if (process.env.PUSH_PLUS_TOKEN_hxtrip3 && Use_pushPlushxtripNotify) {
 				PUSH_PLUS_TOKEN_hxtrip = process.env.PUSH_PLUS_TOKEN_hxtrip3;
 			}
@@ -642,6 +724,22 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 
 			if (process.env.PUSH_KEY4 && Use_serverNotify) {
 				SCKEY = process.env.PUSH_KEY4;
+			}
+
+			if (process.env.WP_APP_TOKEN4 && Use_WxPusher) {
+				WP_APP_TOKEN = process.env.WP_APP_TOKEN4;
+			}
+
+			if (process.env.WP_TOPICIDS4 && Use_WxPusher) {
+				WP_TOPICIDS = process.env.WP_TOPICIDS4;
+			}
+
+			if (process.env.WP_UIDS4 && Use_WxPusher) {
+				WP_UIDS = process.env.WP_UIDS4;
+			}
+
+			if (process.env.WP_URL4 && Use_WxPusher) {
+				WP_URL = process.env.WP_URL4;
 			}
 
 			if (process.env.BARK_PUSH4 && Use_BarkNotify) {
@@ -698,15 +796,14 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 			if (process.env.PUSH_PLUS_USER4 && Use_pushPlusNotify) {
 				PUSH_PLUS_USER = process.env.PUSH_PLUS_USER4;
 			}
-			
-			
+
 			if (process.env.PUSH_PLUS_TOKEN_hxtrip4 && Use_pushPlushxtripNotify) {
 				PUSH_PLUS_TOKEN_hxtrip = process.env.PUSH_PLUS_TOKEN_hxtrip4;
 			}
 			if (process.env.PUSH_PLUS_USER_hxtrip4 && Use_pushPlushxtripNotify) {
 				PUSH_PLUS_USER_hxtrip = process.env.PUSH_PLUS_USER_hxtrip4;
 			}
-			
+
 			break;
 
 		case 5:
@@ -726,6 +823,21 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 				SCKEY = process.env.PUSH_KEY5;
 			}
 
+			if (process.env.WP_APP_TOKEN5 && Use_WxPusher) {
+				WP_APP_TOKEN = process.env.WP_APP_TOKEN5;
+			}
+
+			if (process.env.WP_TOPICIDS5 && Use_WxPusher) {
+				WP_TOPICIDS = process.env.WP_TOPICIDS5;
+			}
+
+			if (process.env.WP_UIDS5 && Use_WxPusher) {
+				WP_UIDS = process.env.WP_UIDS5;
+			}
+
+			if (process.env.WP_URL5 && Use_WxPusher) {
+				WP_URL = process.env.WP_URL5;
+			}
 			if (process.env.BARK_PUSH5 && Use_BarkNotify) {
 				if (process.env.BARK_PUSH5.indexOf('https') > -1 || process.env.BARK_PUSH5.indexOf('http') > -1) {
 					//兼容BARK自建用户
@@ -779,8 +891,8 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 			}
 			if (process.env.PUSH_PLUS_USER5 && Use_pushPlusNotify) {
 				PUSH_PLUS_USER = process.env.PUSH_PLUS_USER5;
-			}			
-			
+			}
+
 			if (process.env.PUSH_PLUS_TOKEN_hxtrip5 && Use_pushPlushxtripNotify) {
 				PUSH_PLUS_TOKEN_hxtrip = process.env.PUSH_PLUS_TOKEN_hxtrip5;
 			}
@@ -789,11 +901,105 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 			}
 			break;
 
+		case 6:
+			//==========================第六套环境变量赋值=========================
+
+			if (process.env.GOBOT_URL6 && Use_gobotNotify) {
+				GOBOT_URL = process.env.GOBOT_URL6;
+			}
+			if (process.env.GOBOT_TOKEN6 && Use_gobotNotify) {
+				GOBOT_TOKEN = process.env.GOBOT_TOKEN6;
+			}
+			if (process.env.GOBOT_QQ6 && Use_gobotNotify) {
+				GOBOT_QQ = process.env.GOBOT_QQ6;
+			}
+
+			if (process.env.PUSH_KEY6 && Use_serverNotify) {
+				SCKEY = process.env.PUSH_KEY6;
+			}
+
+			if (process.env.WP_APP_TOKEN6 && Use_WxPusher) {
+				WP_APP_TOKEN = process.env.WP_APP_TOKEN6;
+			}
+
+			if (process.env.WP_TOPICIDS6 && Use_WxPusher) {
+				WP_TOPICIDS = process.env.WP_TOPICIDS6;
+			}
+
+			if (process.env.WP_UIDS6 && Use_WxPusher) {
+				WP_UIDS = process.env.WP_UIDS6;
+			}
+
+			if (process.env.WP_URL6 && Use_WxPusher) {
+				WP_URL = process.env.WP_URL6;
+			}
+			if (process.env.BARK_PUSH6 && Use_BarkNotify) {
+				if (process.env.BARK_PUSH6.indexOf('https') > -1 || process.env.BARK_PUSH6.indexOf('http') > -1) {
+					//兼容BARK自建用户
+					BARK_PUSH = process.env.BARK_PUSH6;
+				} else {
+					BARK_PUSH = `https://api.day.app/${process.env.BARK_PUSH6}`;
+				}
+				if (process.env.BARK_SOUND6) {
+					BARK_SOUND = process.env.BARK_SOUND6;
+				}
+				if (process.env.BARK_GROUP6) {
+					BARK_GROUP = process.env.BARK_GROUP6;
+				}
+			}
+			if (process.env.TG_BOT_TOKEN6 && Use_tgBotNotify) {
+				TG_BOT_TOKEN = process.env.TG_BOT_TOKEN6;
+			}
+			if (process.env.TG_USER_ID6 && Use_tgBotNotify) {
+				TG_USER_ID = process.env.TG_USER_ID6;
+			}
+			if (process.env.TG_PROXY_AUTH6 && Use_tgBotNotify)
+				TG_PROXY_AUTH = process.env.TG_PROXY_AUTH6;
+			if (process.env.TG_PROXY_HOST6 && Use_tgBotNotify)
+				TG_PROXY_HOST = process.env.TG_PROXY_HOST6;
+			if (process.env.TG_PROXY_PORT6 && Use_tgBotNotify)
+				TG_PROXY_PORT = process.env.TG_PROXY_PORT6;
+			if (process.env.TG_API_HOST6 && Use_tgBotNotify)
+				TG_API_HOST = process.env.TG_API_HOST6;
+
+			if (process.env.DD_BOT_TOKEN6 && Use_ddBotNotify) {
+				DD_BOT_TOKEN = process.env.DD_BOT_TOKEN6;
+				if (process.env.DD_BOT_SECRET6) {
+					DD_BOT_SECRET = process.env.DD_BOT_SECRET6;
+				}
+			}
+
+			if (process.env.QYWX_KEY6 && Use_qywxBotNotify) {
+				QYWX_KEY = process.env.QYWX_KEY6;
+			}
+
+			if (process.env.QYWX_AM6 && Use_qywxamNotify) {
+				QYWX_AM = process.env.QYWX_AM6;
+			}
+
+			if (process.env.IGOT_PUSH_KEY6 && Use_iGotNotify) {
+				IGOT_PUSH_KEY = process.env.IGOT_PUSH_KEY6;
+			}
+
+			if (process.env.PUSH_PLUS_TOKEN6 && Use_pushPlusNotify) {
+				PUSH_PLUS_TOKEN = process.env.PUSH_PLUS_TOKEN6;
+			}
+			if (process.env.PUSH_PLUS_USER6 && Use_pushPlusNotify) {
+				PUSH_PLUS_USER = process.env.PUSH_PLUS_USER6;
+			}
+
+			if (process.env.PUSH_PLUS_TOKEN_hxtrip6 && Use_pushPlushxtripNotify) {
+				PUSH_PLUS_TOKEN_hxtrip = process.env.PUSH_PLUS_TOKEN_hxtrip6;
+			}
+			if (process.env.PUSH_PLUS_USER_hxtrip6 && Use_pushPlushxtripNotify) {
+				PUSH_PLUS_USER_hxtrip = process.env.PUSH_PLUS_USER_hxtrip6;
+			}
+			break;
 		}
 
 		//检查是否在不使用Remark进行名称替换的名单
 		const notifySkipRemarkList = process.env.NOTIFY_SKIP_NAMETYPELIST ? process.env.NOTIFY_SKIP_NAMETYPELIST.split('&') : [];
-		const titleIndex3 = notifySkipRemarkList.findIndex((item) => item === text);
+		const titleIndex3 = notifySkipRemarkList.findIndex((item) => item === strTitle);
 
 		if (text == "京东到家果园互助码:") {
 			ShowRemarkType = "1";
@@ -839,20 +1045,24 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 							}
 							if (!$.FoundPin) {
 								//缓存文件中有没有这个账号，调用京东接口获取别名,并更新缓存文件
+								console.log($.UserName + "好像是新账号，尝试获取别名.....");
 								await GetnickName();
 								if (!$.nickName) {
+									console.log("别名获取失败，尝试调用另一个接口获取别名.....");
 									await GetnickName2();
 								}
 								if ($.nickName) {
-									console.log("好像是新账号，从接口获取别名" + $.nickName);
-									tempAddCK = {
+									console.log("好像是新账号，从接口获取别名" + $.nickName);									
+								} else {
+									console.log($.UserName + "该账号没有别名.....");
+								}
+								tempAddCK = {
 										"pt_pin": $.UserName,
 										"nickName": $.nickName
 									};
-									TempCK.push(tempAddCK);
-									//标识，需要更新缓存文件
-									boolneedUpdate = true;
-								}
+								TempCK.push(tempAddCK);
+								//标识，需要更新缓存文件
+								boolneedUpdate = true;
 							}
 						}
 
@@ -907,56 +1117,41 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 		desp += '\n\n本通知 By ' + strAuthor + "\n通知时间: " + GetDateTime(new Date());
 	else
 		desp += author + "\n通知时间: " + GetDateTime(new Date());
-	
-	
+
 	await serverNotify(text, desp); //微信server酱
-	
-	if(PUSH_PLUS_TOKEN_hxtrip){
+
+	if (PUSH_PLUS_TOKEN_hxtrip) {
 		console.log("hxtrip TOKEN :" + PUSH_PLUS_TOKEN_hxtrip);
 	}
-	if(PUSH_PLUS_USER_hxtrip){
+	if (PUSH_PLUS_USER_hxtrip) {
 		console.log("hxtrip USER :" + PUSH_PLUS_USER_hxtrip);
 	}
 	PushErrorTime = 0;
 	await pushPlusNotifyhxtrip(text, desp); //pushplushxtrip(推送加)
 	if (PushErrorTime > 0) {
-		console.log("等待" + (PushErrorTime) + "分钟后重试.....");
-		await $.wait(60000 * (PushErrorTime));
-		await pushPlusNotifyhxtrip(text, desp); //pushplus(推送加)
+		console.log("等待1分钟后重试.....");
+		await $.wait(60000);
+		await pushPlusNotifyhxtrip(text, desp);
 	}
-	if (PushErrorTime > 0) {
-		console.log("等待" + (PushErrorTime) + "分钟后重试.....");
-		await $.wait(60000 * (PushErrorTime));
-		await pushPlusNotifyhxtrip(text, desp); //pushplus(推送加)
-	}
-	if (PushErrorTime > 0) {
-		console.log("等待" + (PushErrorTime) + "分钟后重试.....");
-		await $.wait(60000 * (PushErrorTime));
-		await pushPlusNotifyhxtrip(text, desp); //pushplus(推送加)
-	}
-	
-	if(PUSH_PLUS_TOKEN){
+
+	if (PUSH_PLUS_TOKEN) {
 		console.log("PUSH_PLUS TOKEN :" + PUSH_PLUS_TOKEN);
 	}
-	if(PUSH_PLUS_USER){
+	if (PUSH_PLUS_USER) {
 		console.log("PUSH_PLUS USER :" + PUSH_PLUS_USER);
 	}
 	PushErrorTime = 0;
 	await pushPlusNotify(text, desp); //pushplus(推送加)
 	if (PushErrorTime > 0) {
-		console.log("等待" + (PushErrorTime) + "分钟后重试.....");
-		await $.wait(60000 * (PushErrorTime));
+		console.log("等待1分钟后重试.....");
+		await $.wait(60000);
 		await pushPlusNotify(text, desp); //pushplus(推送加)
 	}
 	if (PushErrorTime > 0) {
-		console.log("等待" + (PushErrorTime) + "分钟后重试.....");
-		await $.wait(60000 * (PushErrorTime));
+		console.log("等待1分钟后重试.....");
+		await $.wait(60000);
 		await pushPlusNotify(text, desp); //pushplus(推送加)
-	}
-	if (PushErrorTime > 0) {
-		console.log("等待" + (PushErrorTime) + "分钟后重试.....");
-		await $.wait(60000 * (PushErrorTime));
-		await pushPlusNotify(text, desp); //pushplus(推送加)
+
 	}
 
 	//由于上述两种微信通知需点击进去才能查看到详情，故text(标题内容)携带了账号序号以及昵称信息，方便不点击也可知道是哪个京东哪个活动
@@ -969,17 +1164,60 @@ async function sendNotify(text, desp, params = {}, author = '\n\n本通知 By cc
 			qywxamNotify(text, desp), //企业微信应用消息推送
 			iGotNotify(text, desp, params), //iGot
 			gobotNotify(text, desp), //go-cqhttp
+			wxpusherNotify(text, desp) // wxpusher
 		]);
 }
 
+async function sendNotifybyWxPucher(text, desp, PtPin, author = '\n\n本通知 By ccwav Mod') {
+
+	try {
+		var Uid = "";
+		var UserRemark = [];
+		strAuthor="";
+		if (process.env.NOTIFY_AUTHOR) {
+			strAuthor = process.env.NOTIFY_AUTHOR;
+		}
+		WP_APP_TOKEN_ONE="";
+		if (process.env.WP_APP_TOKEN_ONE) {
+			WP_APP_TOKEN_ONE = process.env.WP_APP_TOKEN_ONE;
+		}
+		if (WP_APP_TOKEN_ONE) {
+			if (TempCKUid) {
+				for (let j = 0; j < TempCKUid.length; j++) {
+					if (TempCKUid[j].pt_pin == PtPin) {
+						Uid = TempCKUid[j].Uid;
+					}
+				}
+			}
+			if (Uid) {
+				console.log("查询到Uid ：" + Uid);
+				WP_UIDS_ONE = Uid;				
+				console.log("正在发送一对一通知,请稍后...");
+				if (strAuthor)
+					desp += '\n\n本通知 By ' + strAuthor;
+				else
+					desp += author;
+				await wxpusherNotifyByOne(text, desp);
+			} else {
+				console.log("未查询到用户的Uid,取消一对一通知发送...");
+			}
+		} else {
+			console.log("变量WP_APP_TOKEN_ONE未配置WxPusher的appToken, 取消发送...");
+
+		}
+	} catch (error) {
+		console.error(error);
+	}
+
+}
 function gobotNotify(text, desp, time = 2100) {
 	return new Promise((resolve) => {
 		if (GOBOT_URL) {
 			const options = {
 				url: `${GOBOT_URL}?access_token=${GOBOT_TOKEN}&${GOBOT_QQ}`,
-				body: `message=${text}\n${desp}`,
+				json: { message: `${text}\n${desp}` },
 				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
+					'Content-Type': 'application/json',
 				},
 				timeout,
 			};
@@ -1457,7 +1695,7 @@ function pushPlusNotifyhxtrip(text, desp) {
 						PushErrorTime += 1;
 						console.log(err);
 					} else {
-						if (data.indexOf("200")>-1) {
+						if (data.indexOf("200") > -1) {
 							console.log(`hxtrip push+发送${PUSH_PLUS_USER_hxtrip ? '一对多' : '一对一'}通知消息完成。\n`);
 							PushErrorTime = 0;
 						} else {
@@ -1510,6 +1748,111 @@ function pushPlusNotify(text, desp) {
 						} else {
 							console.log(`push+发送${PUSH_PLUS_USER ? '一对多' : '一对一'}通知消息失败：${data.msg}\n`);
 							PushErrorTime += 1;
+						}
+					}
+				} catch (e) {
+					$.logErr(e, resp);
+				}
+				finally {
+					resolve(data);
+				}
+			});
+		} else {
+			resolve();
+		}
+	});
+}
+function wxpusherNotifyByOne(text, desp) {
+	return new Promise((resolve) => {
+		if (WP_APP_TOKEN_ONE) {
+			var WPURL="";
+			let uids = [];
+			for (let i of WP_UIDS_ONE.split(";")) {
+				if (i.length != 0)
+					uids.push(i);
+			};
+			let topicIds = [];			
+			const body = {
+				appToken: `${WP_APP_TOKEN_ONE}`,
+				content: `${text}\n\n${desp}`,
+				summary: `${text}`,
+				contentType: 1,
+				topicIds: topicIds,
+				uids: uids,
+				url: `${WPURL}`,
+			};
+			const options = {
+				url: `http://wxpusher.zjiecode.com/api/send/message`,
+				body: JSON.stringify(body),
+				headers: {
+					"Content-Type": "application/json",
+				},
+				timeout,
+			};
+			$.post(options, (err, resp, data) => {
+				try {
+					if (err) {
+						console.log("WxPusher 发送通知调用 API 失败！！\n");
+						console.log(err);
+					} else {
+						data = JSON.parse(data);
+						if (data.code === 1000) {
+							console.log("WxPusher 发送通知消息成功!\n");
+						}
+					}
+				} catch (e) {
+					$.logErr(e, resp);
+				}
+				finally {
+					resolve(data);
+				}
+			});
+		} else {
+			resolve();
+		}
+	});
+}
+
+
+function wxpusherNotify(text, desp) {
+	return new Promise((resolve) => {
+		if (WP_APP_TOKEN) {
+			let uids = [];
+			for (let i of WP_UIDS.split(";")) {
+				if (i.length != 0)
+					uids.push(i);
+			};
+			let topicIds = [];
+			for (let i of WP_TOPICIDS.split(";")) {
+				if (i.length != 0)
+					topicIds.push(i);
+			};
+			const body = {
+				appToken: `${WP_APP_TOKEN}`,
+				content: `${text}\n\n${desp}`,
+				summary: `${text}`,
+				contentType: 1,
+				topicIds: topicIds,
+				uids: uids,
+				url: `${WP_URL}`,
+			};
+			const options = {
+				url: `http://wxpusher.zjiecode.com/api/send/message`,
+				body: JSON.stringify(body),
+				headers: {
+					"Content-Type": "application/json",
+				},
+				timeout,
+			};
+			$.post(options, (err, resp, data) => {
+				try {
+					if (err) {
+						console.log("WxPusher 发送通知调用 API 失败！！\n");
+						console.log(err);
+					} else {
+						data = JSON.parse(data);
+						if (data.code === 1000) {
+							console.log("WxPusher 发送通知消息成功!\n");
 						}
 					}
 				} catch (e) {
@@ -1646,6 +1989,7 @@ function GetnickName2() {
 
 module.exports = {
 	sendNotify,
+	sendNotifybyWxPucher,
 	BARK_PUSH,
 };
 
