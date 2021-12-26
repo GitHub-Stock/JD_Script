@@ -8,6 +8,17 @@
  *
  * @Address: https://github.com/X1a0He/jd_scripts_fixed/blob/main/jd_try_xh.js
  * @LastEditors: X1a0He
+ 参考环境变量配置如下：
+export JD_TRY="true"
+export JD_TRY_PLOG="true" #是否打印输出到日志
+export JD_TRY_PASSZC="true" #过滤种草官类试用
+export JD_TRY_MAXLENGTH="50" #商品数组的最大长度
+export JD_TRY_APPLYINTERVAL="5000" #商品试用之间和获取商品之间的间隔
+export JD_TRY_APPLYNUMFILTER="100000" #过滤大于设定值的已申请人数
+export JD_TRY_MINSUPPLYNUM="1" #最小提供数量
+export JD_TRY_SENDNUM="10" #每隔多少账号发送一次通知，不需要可以不用设置
+cron "4 1-22/8 * * *" jd_try.js, tag:京东试用
+
  */
 const $ = new Env('京东试用')
 const URL = 'https://api.m.jd.com/client.action'
@@ -53,7 +64,7 @@ let args_xh = {
     /*
      * 获取试用商品类型，默认为1，原来不是数组形式，我以为就只有几个tab，结果后面还有我服了
      * 1 - 精选
-     * 2 - 闪电试
+     * 2 - 闪电试用
      * 3 - 家用电器(可能会有变化)
      * 4 - 手机数码(可能会有变化)
      * 5 - 电脑办公(可能会有变化)
@@ -80,7 +91,7 @@ let args_xh = {
      * C商品原价49元，现在试用价1元，如果下面设置为1，那C商品也会被添加到带提交试用组，因为1 = 1
      * 可设置环境变量：JD_TRY_TRIALPRICE，默认为0
      * */
-    trialPrice: process.env.JD_TRY_TRIALPRICE * 1 || 1,
+    trialPrice: process.env.JD_TRY_TRIALPRICE * 1 || 0,
     /*
      * 最小提供数量，例如试用商品只提供2份试用资格，当前设置为1，则会进行申请
      * 若只提供5分试用资格，当前设置为10，则不会申请
@@ -91,7 +102,7 @@ let args_xh = {
      * 过滤大于设定值的已申请人数，例如下面设置的1000，A商品已经有1001人申请了，则A商品不会进行申请，会被跳过
      * 可设置环境变量：JD_TRY_APPLYNUMFILTER
      * */
-    applyNumFilter: process.env.JD_TRY_APPLYNUMFILTER * 1 || 40000,
+    applyNumFilter: process.env.JD_TRY_APPLYNUMFILTER * 1 || 10000,
     /*
      * 商品试用之间和获取商品之间的间隔, 单位：毫秒(1秒=1000毫秒)
      * 可设置环境变量：JD_TRY_APPLYINTERVAL
@@ -144,9 +155,6 @@ let args_xh = {
 }
 //上面很重要，遇到问题请把上面注释看一遍再来问
 !(async() => {
-    console.log('X1a0He留：遇到问题请把脚本内的注释看一遍再来问，谢谢')
-    console.log('X1a0He留：遇到问题请把脚本内的注释看一遍再来问，谢谢')
-    console.log('X1a0He留：遇到问题请把脚本内的注释看一遍再来问，谢谢')
     await $.wait(500)
     // 如果你要运行京东试用这个脚本，麻烦你把环境变量 JD_TRY 设置为 true
     if(process.env.JD_TRY && process.env.JD_TRY === 'true'){
