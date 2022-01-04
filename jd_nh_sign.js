@@ -1,5 +1,5 @@
 /*
-京东集魔方
+年货签到
 by:小手冰凉 tg:@chianPLA
 交流群：https://t.me/jdPLA2
 脚本更新时间：2021-12-27 19:20
@@ -8,11 +8,11 @@ by:小手冰凉 tg:@chianPLA
 改自Aaron
 ===========================
 [task_local]
-#京东集魔方
-31 2,8 * * * jd_mofang_j.js, tag=京东集魔方, img-url=https://raw.githubusercontent.com/Orz-3/mini/master/Color/jd.png, enabled=true
+#年货签到
+14 2,20 * * * jd_nh_sign.js, tag=年货签到, img-url=https://raw.githubusercontent.com/Orz-3/mini/master/Color/jd.png, enabled=true
  */
 
-const $ = new Env('京东集魔方');
+const $ = new Env('年货签到');
 const notify = $.isNode() ? require('./sendNotify') : '';
 //Node.js用户请在jdCookie.js处填写京东ck;
 const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
@@ -20,7 +20,6 @@ let jdNotify = true;//是否关闭通知，false打开通知推送，true关闭�
 //IOS等用户直接用NobyDa的jd cookie
 let cookiesArr = [], cookie = '', message;
 let uuid
-$.shareCodes = []
 let hotInfo = {}
 if ($.isNode()) {
   Object.keys(jdCookieNode).forEach((item) => {
@@ -36,6 +35,7 @@ const JD_API_HOST = 'https://api.m.jd.com/client.action';
     $.msg($.name, '【提示】请先获取京东账号一cookie\n直接使用NobyDa的京东签到获取', 'https://bean.m.jd.com/bean/signIndex.action', { "open-url": "https://bean.m.jd.com/bean/signIndex.action" });
     return;
   }
+
   for (let i = 0; i < cookiesArr.length; i++) {
     if (cookiesArr[i]) {
       cookie = cookiesArr[i];
@@ -43,7 +43,10 @@ const JD_API_HOST = 'https://api.m.jd.com/client.action';
       $.index = i + 1;
       $.isLogin = true;
       $.nickName = '';
+      $.encryptProjectId = '';
       message = '';
+      $.sku = [], $.sku2 = [], $.adv = []
+      await getInfo("https://prodev.m.jd.com/mall/active/fARfxZh3zdMqs4tkFBhpqaQKTGA/index.html");//集魔方首页
       await TotalBean();
       console.log(`\n******开始【京东账号${$.index}】${$.nickName || $.UserName}*********\n`);
       if (!$.isLogin) {
@@ -54,13 +57,10 @@ const JD_API_HOST = 'https://api.m.jd.com/client.action';
         }
         continue
       }
-      $.sku = []
-      $.sku2 = []
-      $.adv = []
-      $.hot = false
+
       uuid = randomString(40)
-      await jdMofang()
-      hotInfo[$.UserName] = $.hot
+      console.log(`\n年货节签到\n`)
+      await queryInteractiveInfo($.encryptProjectId, "aceaceglqd20211215");
     }
   }
 })()
@@ -71,76 +71,29 @@ const JD_API_HOST = 'https://api.m.jd.com/client.action';
     $.done();
   })
 
-async function jdMofang() {
-  console.log(`\n集魔方 抽京豆 赢新品`)
-  await getInteractionInfo()
-}
-
-//第二个
-async function getInteractionInfo(type = true) {
+async function queryInteractiveInfo(encryptProjectId, sourceCode) {
   return new Promise(async (resolve) => {
-    $.post(taskPostUrl("getInteractionInfo", { "geo": { "lng": "0", "lat": "0" }, "mcChannel": 0, "sign": 3 }), async (err, resp, data) => {
+    $.post(taskUrl("queryInteractiveInfo", { "encryptProjectId": encryptProjectId, "sourceCode": sourceCode }), async (err, resp, data) => {
       try {
         if (err) {
           console.log(`${JSON.stringify(err)}`)
-          console.log(`getInteractionInfo API请求失败，请检查网路重试`)
+          console.log(`queryInteractiveInfo API请求失败，请检查网路重试`)
         } else {
-          if (safeGet(data)) {
-            data = JSON.parse(data)
-            // console.log(data.result.taskPoolInfo.taskList);
-            if (type) {
-              $.interactionId = data.result.interactionId
-              $.taskPoolId = data.result.taskPoolInfo.taskPoolId
-              for (let key of Object.keys(data.result.taskPoolInfo.taskList)) {
-                let vo = data.result.taskPoolInfo.taskList[key]
-                if (vo.taskStatus === 0) {
-                  if (vo.taskId === 2004) {
-                    await queryPanamaFloor()
-                    //console.log(JSON.stringify($.sku2))
-                    for (let id of $.sku2) {
-                      $.complete = false
-                      await executeNewInteractionTask(vo.taskId, id)
-                      await $.wait(2000)
-                      if ($.complete) break
-                    }
-                  }
-                  if (vo.taskId === 2002) {
-                    await qryCompositeMaterials()
-                    for (let id of $.sku) {
-                      $.complete = false
-                      await executeNewInteractionTask(vo.taskId, id)
-                      await $.wait(2000)
-                      if ($.complete) break
-                    }
-                  }
-                  if (vo.taskId === 2006) {
-                    await qryCompositeMaterials2()
-                    for (let id2 of $.adv) {
-                      $.complete = false
-                      await executeNewInteractionTask(vo.taskId, id2)
-                      await $.wait(2000)
-                      if ($.complete) break
-                    }
-                  }
-                } else {
-                  console.log(`已找到当前魔方`)
-                }
-              }
-              data = await getInteractionInfo(false)
-              if (data.result.hasFinalLottery === 0) {
-                let num = 0
-                for (let key of Object.keys(data.result.taskPoolInfo.taskRecord)) {
-                  let vo = data.result.taskPoolInfo.taskRecord[key]
-                  num += vo
-                }
-                if (num >= 9) {
-                  console.log(`共找到${num}个魔方，可开启礼盒`)
-                  await getNewFinalLotteryInfo()
-                } else {
-                  console.log(`共找到${num}个魔方，不可开启礼盒`)
-                }
-              } else {
-                console.log(`已开启礼盒`)
+          data = JSON.parse(data)
+          if (data.code == '0') {
+            for (let v of data.assignmentList) {
+              if (new Date().getDate() == 9 && v.assignmentName == '9日大奖') {
+                await queryInteractiveRewardInfo($.encryptProjectId, v.encryptAssignmentId, "aceaceglqd20211215");
+                await doInteractiveAssignment($.encryptProjectId, v.encryptAssignmentId, "aceaceglqd20211215");
+              } else if (new Date().getDate() == 17 && v.assignmentName == '17日大奖') {
+                await queryInteractiveRewardInfo($.encryptProjectId, v.encryptAssignmentId, "aceaceglqd20211215");
+                await doInteractiveAssignment($.encryptProjectId, v.encryptAssignmentId, "aceaceglqd20211215");
+              } else if (new Date().getDate() == 24 && v.assignmentName == '24日大奖') {
+                await queryInteractiveRewardInfo($.encryptProjectId, v.encryptAssignmentId, "aceaceglqd20211215");
+                await doInteractiveAssignment($.encryptProjectId, v.encryptAssignmentId, "aceaceglqd20211215");
+              } else if (v.assignmentName == '签到') {
+                await queryInteractiveRewardInfo($.encryptProjectId, v.encryptAssignmentId, "aceaceglqd20211215");
+                await doInteractiveAssignment($.encryptProjectId, v.encryptAssignmentId, "aceaceglqd20211215");
               }
             }
           }
@@ -148,27 +101,23 @@ async function getInteractionInfo(type = true) {
       } catch (e) {
         $.logErr(e, resp)
       } finally {
-        resolve(data)
+        resolve()
       }
     })
   })
 }
-function queryPanamaFloor() {
-  return new Promise((resolve) => {
-    $.post(taskPostUrl("qryCompositeMaterials", {"geo":{"lng":"114.266438","lat":"22.74448"},"mcChannel":0,"activityId":"01128912","pageId":"3278395","qryParam":"[{\"type\":\"advertGroup\",\"id\":\"06053714\",\"mapTo\":\"advData\",\"next\":[{\"type\":\"advertGroup\",\"mapKey\":\"desc\",\"mapTo\":\"advertGroup\"}]}]","applyKey":"21new_products_h"}), (err, resp, data) => {
+
+async function queryInteractiveRewardInfo(encryptProjectId, AssignmentId, sourceCode) {
+  body = { "encryptProjectId": encryptProjectId, "encryptProjectPoolId": AssignmentId, "sourceCode": sourceCode, "ext": { "pageSize": 30, "detailTypeFlag": 2, "currentPage": 1 } }
+  return new Promise(async (resolve) => {
+    $.post(taskUrl("queryInteractiveRewardInfo", body), async (err, resp, data) => {
       try {
         if (err) {
           console.log(`${JSON.stringify(err)}`)
-          console.log(`queryPanamaFloor API请求失败，请检查网路重试`)
+          console.log(`queryInteractiveRewardInfo API请求失败，请检查网路重试`)
         } else {
           if (safeGet(data)) {
             data = JSON.parse(data)
-             //console.log(data.data.advData.list.length);
-            for (let skuVo of data.data.advData.list) {
-                //console.log(skuVo)
-                $.sku2.push(skuVo.advertId)
-              //}
-            }
           }
         }
       } catch (e) {
@@ -180,154 +129,21 @@ function queryPanamaFloor() {
   })
 }
 
-/*function queryPanamaFloor() {
-  return new Promise((resolve) => {
-    let options = {
-      url: 'https://api.m.jd.com/client.action?functionId=queryPanamaFloor',
-      headers: {
-        'Host': 'api.m.jd.com',*/
-        //'Accept': 'application/json, text/plain, */*',
-/*        'Content-Type': 'application/x-www-form-urlencoded',
-        'Origin': 'https://prodev.m.jd.com',
-        'Accept-Language': 'zh-cn',
-        'User-Agent': $.isNode() ? (process.env.JD_USER_AGENT ? process.env.JD_USER_AGENT : (require('./USER_AGENTS').USER_AGENT)) : ($.getdata('JDUA') ? $.getdata('JDUA') : "jdapp;iPhone;9.4.4;14.3;network/4g;Mozilla/5.0 (iPhone; CPU iPhone OS 14_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1"),
-        'Referer': 'https://prodev.m.jd.com/mall/active/TqTRGRrp9HZTfeyRTL2UGmX4mHG/index.html?babelChannel=ttt30',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Cookie': cookie
-      },
-      body: `body=%7B%22activityId%22%3A%22TqTRGRrp9HZTfeyRTL2UGmX4mHG%22%2C%22pageId%22%3A%223195530%22%2C%22transParam%22%3A%22%7B%5C%22bsessionId%5C%22%3A%5C%22927e63e4-908d-4475-a7c3-3fd45244d448%5C%22%2C%5C%22babelChannel%5C%22%3A%5C%22ttt30%5C%22%2C%5C%22actId%5C%22%3A%5C%2201128912%5C%22%2C%5C%22enActId%5C%22%3A%5C%22TqTRGRrp9HZTfeyRTL2UGmX4mHG%5C%22%2C%5C%22pageId%5C%22%3A%5C%223195530%5C%22%2C%5C%22encryptCouponFlag%5C%22%3A%5C%221%5C%22%2C%5C%22sc%5C%22%3A%5C%22android%5C%22%2C%5C%22scv%5C%22%3A%5C%2210.3.0%5C%22%2C%5C%22requestChannel%5C%22%3A%5C%22h5%5C%22%2C%5C%22jdAtHomePage%5C%22%3A%5C%220%5C%22%2C%5C%22utmFlag%5C%22%3A%5C%220%5C%22%7D%22%2C%22floorList%22%3A%5B%7B%22alias%22%3A70061421%7D%2C%7B%22alias%22%3A70061428%7D%5D%2C%22siteClient%22%3A%22android%22%2C%22mitemAddrId%22%3A%22%22%2C%22geo%22%3A%7B%22lng%22%3A%22%22%2C%22lat%22%3A%22%22%7D%2C%22addressId%22%3A%22%22%2C%22posLng%22%3A%22%22%2C%22posLat%22%3A%22%22%2C%22un_area%22%3A%2222_1930_49322_49433%22%2C%22gps_area%22%3A%220_0_0_0%22%2C%22homeLng%22%3A%22103.856529%22%2C%22homeLat%22%3A%2230.810341%22%2C%22focus%22%3A%22%22%2C%22innerAnchor%22%3A%22%22%2C%22cv%22%3A%222.0%22%7D&screen=1080*2007&client=wh5&clientVersion=1.0.0&sid=c6f86d00233b0d0fb0e8d952be52d0aw&uuid=&area=22_1930_49322_49433&appid=babelh5&ext=%7B%22prstate%22%3A%220%22%7D`
-    }
-    $.post(options, (err, resp, data) => {
+// 兑换
+async function doInteractiveAssignment(encryptProjectId, AssignmentId, sourceCode) {
+  return new Promise(async (resolve) => {
+    $.post(taskUrl("doInteractiveAssignment", { "encryptProjectId": encryptProjectId, "encryptAssignmentId": AssignmentId, "sourceCode": sourceCode, "completionFlag": true }), async (err, resp, data) => {
       try {
         if (err) {
           console.log(`${JSON.stringify(err)}`)
-          console.log(`${$.name} queryPanamaPage API请求失败，请检查网路重试`)
+          console.log(`doInteractiveAssignment API请求失败，请检查网路重试`)
         } else {
           if (safeGet(data)) {
             data = JSON.parse(data)
-            console.log(JSON.stringify(data))
-            for (let key of Object.keys(data.floorList)) {
-              let vo = data.floorList[key]
-              if (vo.data && vo.data.goodsInfo_0) {
-                for (let key of Object.keys(vo.data.goodsInfo_0.list)) {
-                  let skuVo = vo.data.goodsInfo_0.list[key]
-                  $.sku2.push(skuVo.skuId)
-                }
-                break
-              }
-            }
-          }
-        }
-      } catch (e) {
-        $.logErr(e, resp)
-      } finally {
-        resolve(data)
-      }
-    })
-  })
-}*/
-
-function qryCompositeMaterials() {
-  return new Promise((resolve) => {
-    $.post(taskPostUrl("qryCompositeMaterials", { "geo": null, "mcChannel": 0, "activityId": "01128912", "pageId": "3195530", "qryParam": "[{\"type\":\"advertGroup\",\"id\":\"06050930\",\"mapTo\":\"advData\",\"next\":[{\"type\":\"productGroup\",\"mapKey\":\"desc\",\"mapTo\":\"productGroup\",\"attributes\":13}]}]", "applyKey": "21new_products_h" }), (err, resp, data) => {
-      try {
-        if (err) {
-          console.log(`${JSON.stringify(err)}`)
-          console.log(`qryCompositeMaterials API请求失败，请检查网路重试`)
-        } else {
-          if (safeGet(data)) {
-            data = JSON.parse(data)
-            // console.log(data);
-            for (let key of Object.keys(data.data.advData.list)) {
-              let vo = data.data.advData.list[key]
-              if (vo.next && vo.next.productGroup) {
-                for (let key of Object.keys(vo.next.productGroup.list)) {
-                  let skuVo = vo.next.productGroup.list[key]
-                  $.sku.push(skuVo.skuId)
-                }
-                break
-              }
-            }
-          }
-        }
-      } catch (e) {
-        $.logErr(e, resp)
-      } finally {
-        resolve(data)
-      }
-    })
-  })
-}
-
-function qryCompositeMaterials2() {
-  return new Promise((resolve) => {
-    $.post(taskPostUrl("qryCompositeMaterials", { "geo": null, "mcChannel": 0, "activityId": "01128912", "pageId": "3195530", "qryParam": "[{\"type\":\"advertGroup\",\"id\":\"06066757\",\"mapTo\":\"advData\",\"next\":[{\"type\":\"productGroup\",\"mapKey\":\"desc\",\"mapTo\":\"productGroup\",\"attributes\":13}]}]", "applyKey": "21new_products_h" }), (err, resp, data) => {
-      try {
-        if (err) {
-          console.log(`${JSON.stringify(err)}`)
-          console.log(`qryCompositeMaterials API请求失败，请检查网路重试`)
-        } else {
-          if (safeGet(data)) {
-            data = JSON.parse(data)
-            // console.log(data);
-            for (let key of Object.keys(data.data.advData.list)) {
-              let vo = data.data.advData.list[key]
-              $.adv.push(vo.advertId)
-              // console.log($.adv);
-            }
-          }
-        }
-      } catch (e) {
-        $.logErr(e, resp)
-      } finally {
-        resolve(data)
-      }
-    })
-  })
-}
-function executeNewInteractionTask(taskType, advertId) {
-  body = { "geo": null, "mcChannel": 0, "sign": 3, "interactionId": $.interactionId, "taskPoolId": $.taskPoolId, "taskType": taskType, "advertId": advertId }
-  if (taskType === 2002) {
-    body = { "geo": null, "mcChannel": 0, "sign": 3, "interactionId": $.interactionId, "taskPoolId": $.taskPoolId, "taskType": taskType, "sku": advertId }
-  }
-  return new Promise((resolve) => {
-    $.post(taskPostUrl("executeNewInteractionTask", body), (err, resp, data) => {
-      // console.log(taskPostUrl("executeNewInteractionTask", body));
-      try {
-        if (err) {
-          console.log(`${JSON.stringify(err)}`)
-          console.log(`${$.name} executeNewInteractionTask API请求失败，请检查网路重试`)
-        } else {
-          if (safeGet(data)) {
-            data = JSON.parse(data)
-            if (data.result.hasDown === 1) {
-              console.log(data.result.isLottery === 1 ? `找到了一个魔方，获得${data.result.lotteryInfoList[0].quantity || ''}${data.result.lotteryInfoList[0].name}` : `找到了一个魔方`)
-              $.complete = true
-            }
-          }
-        }
-      } catch (e) {
-        $.logErr(e, resp)
-      } finally {
-        resolve(data)
-      }
-    })
-  })
-}
-function getNewFinalLotteryInfo() {
-  return new Promise((resolve) => {
-    $.post(taskPostUrl("getNewFinalLotteryInfo", { "geo": null, "mcChannel": 0, "sign": 3, "interactionId": $.interactionId }), (err, resp, data) => {
-      try {
-        if (err) {
-          console.log(`${JSON.stringify(err)}`)
-          console.log(`${$.name} getNewFinalLotteryInfo API请求失败，请检查网路重试`)
-        } else {
-          if (safeGet(data)) {
-            data = JSON.parse(data)
-            if (data.result.lotteryStatus === 1) {
-              console.log(`开启礼盒成功：获得${data.result.lotteryInfoList[0].quantity}${data.result.lotteryInfoList[0].name}`)
+            if (data.subCode == '0') {
+              console.log(`当前兑换${JSON.stringify(data.rewardsInfo.successRewards)}`);
             } else {
-              console.log(`开启礼盒成功：${data.result.toast}`)
+              console.log(data.msg);
             }
           }
         }
@@ -340,12 +156,9 @@ function getNewFinalLotteryInfo() {
   })
 }
 
-
-function taskPostUrl(functionId, body = {}) {
-  body = JSON.stringify(body)
-  if (functionId === "queryPanamaPage") body = escape(body)
+function taskUrl(functionId, body = {}) {
   return {
-    url: `${JD_API_HOST}?functionId=${functionId}&body=${encodeURI((body))}&client=wh5&clientVersion=10.1.4&appid=content_ecology&uuid=${uuid}&t=${Date.now()}`,
+    url: `${JD_API_HOST}?functionId=${functionId}&body=${JSON.stringify(body)}&appid=publicUseApi&client=wh5&clientVersion=1.0.0&sid=&uuid=&area=22_2005_2009_36999&networkType=`,
     headers: {
       'Host': 'api.m.jd.com',
       'Accept': 'application/json, text/plain, */*',
@@ -353,29 +166,31 @@ function taskPostUrl(functionId, body = {}) {
       'Origin': 'https://prodev.m.jd.com',
       'Accept-Language': 'zh-cn',
       'User-Agent': $.isNode() ? (process.env.JD_USER_AGENT ? process.env.JD_USER_AGENT : (require('./USER_AGENTS').USER_AGENT)) : ($.getdata('JDUA') ? $.getdata('JDUA') : "jdapp;iPhone;9.4.4;14.3;network/4g;Mozilla/5.0 (iPhone; CPU iPhone OS 14_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1"),
-      'Referer': 'https://prodev.m.jd.com/mall/active/TqTRGRrp9HZTfeyRTL2UGmX4mHG/index.html?babelChannel=ttt30',
+      'Referer': 'https://prodev.m.jd.com/mall/active/fARfxZh3zdMqs4tkFBhpqaQKTGA/index.html',
       'Accept-Encoding': 'gzip, deflate, br',
       'Cookie': cookie
     }
   }
 }
 
-
-function taskSignUrl(url, body) {
-  return {
-    url,
-    body: `body=${escape(body)}`,
-    headers: {
-      'Cookie': cookie,
-      'Host': 'api.m.jd.com',
-      'Connection': 'keep-alive',
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Referer': '',
-      'User-Agent': 'JD4iPhone/167774 (iPhone; iOS 14.7.1; Scale/3.00)',
-      'Accept-Language': 'zh-Hans-CN;q=1',
-      'Accept-Encoding': 'gzip, deflate, br',
-    }
-  }
+function getInfo(url) {
+  return new Promise(resolve => {
+    $.get({
+      url,
+      headers: {
+        Cookie: cookie,
+        'User-Agent': 'JD4iPhone/167650 (iPhone; iOS 13.7; Scale/3.00)'
+      }
+    }, async (err, resp, data) => {
+      try {
+        $.encryptProjectId = resp.body.match(/"projectId":"(.*?)"/)[1];
+      } catch (e) {
+        $.logErr(e, resp)
+      } finally {
+        resolve()
+      }
+    })
+  })
 }
 function randomString(e) {
   let t = "abcdef0123456789"
@@ -385,43 +200,6 @@ function randomString(e) {
   for (let i = 0; i < e; i++)
     n += t.charAt(Math.floor(Math.random() * a));
   return n
-}
-
-function getSign(functionid, body, uuid) {
-  return new Promise(async resolve => {
-    let data = {
-      "functionId": functionid,
-      "body": body,
-      "uuid": uuid,
-      "client": "apple",
-      "clientVersion": "10.1.0"
-    }
-    let HostArr = ['jdsign.cf', 'signer.nz.lu']
-    let Host = HostArr[Math.floor((Math.random() * HostArr.length))]
-    let options = {
-      url: `https://cdn.nz.lu/ddo`,
-      body: JSON.stringify(data),
-      headers: {
-        Host,
-        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1 Edg/87.0.4280.88"
-      },
-      timeout: 30 * 1000
-    }
-    $.post(options, (err, resp, data) => {
-      try {
-        if (err) {
-          console.log(`${JSON.stringify(err)}`)
-          console.log(`${$.name} getSign API请求失败，请检查网路重试`)
-        } else {
-
-        }
-      } catch (e) {
-        $.logErr(e, resp)
-      } finally {
-        resolve(data);
-      }
-    })
-  })
 }
 
 function TotalBean() {
@@ -465,16 +243,7 @@ function TotalBean() {
     })
   })
 }
-function showMsg() {
-  return new Promise(resolve => {
-    if (!jdNotify) {
-      $.msg($.name, '', `${message}`);
-    } else {
-      $.log(`京东账号${$.index}${$.nickName}\n${message}`);
-    }
-    resolve()
-  })
-}
+
 function safeGet(data) {
   try {
     if (typeof JSON.parse(data) == "object") {
