@@ -1,20 +1,19 @@
-if (!["true"].includes(process.env.JD_JGWCCJ)) {
-    console.log("避免自动运行请设置加购环境变量JD_JGWCCJ为\"true\"来运行本脚本")
-    return
-}
 /*
 https://lzkj-isv.isvjcloud.com/wxgame/activity/8530275?activityId=
 
+TG https://t.me/duckjobs
+
+不能并发
+
 JD_CART_REMOVESIZE || 20; // 运行一次取消多全部已关注的商品。数字0表示不取关任何商品
 JD_CART_REMOVEALL || true;    //是否清空，如果为false，则上面设置了多少就只删除多少条
-
 
 */
 const $ = new Env('加购物车抽奖');
 const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
 const notify = $.isNode() ? require('./sendNotify') : '';
 let cookiesArr = [], cookie = '', message = '' ,isPush = false;
-let activityIdList = ['5e733f46fd1b4d7db9ee3fbe345542ef', '0d609439062847e8a7b79db2968ba9d5', 'cb2f397a60994ae5b6f05913a3fd6384', '7ba1c4420f094931a90508bda10d92b1', '21a824f2b2c149528667179ed08a334a', 'ba0a7dcabdab4ae2af6aa3912c8f3f12', '5113f35b6f2a4c08bd413eb8573ebead', '1900f76d7d37467ca2eaf17992e67e57', '4b83932e9860452f8d102c3dae21a8ea', '49f8d4ba5be245bfa808ec98c0b9c95b', '29432360178c48bda065f6769e5ec1f4', 'aabfd610b86b482e81a513cb36d72af3', 'f728e93a6d694096845e80e6c537f852', 'c0c2a97214c7468c936220d01d74e556', 'de50659b20bc4dfe957d473ce799f22c', 'a9635959cc8a4672bd5ae5e4facf2194', '199c985626ff4cd2b8095e73376485ac', '82b2e9dd9e8f405c8c7b2cb4d6c412a9', '1b29dceb483541f68ce56c0c24aef172']
+let activityIdList = ['11b4d4d13fa24062bb0cb45c0abd3301', 'f0ffa62f09f6447b8fcfddaeafd15810', '421c0b9e90f2423d8ef980c2508bc7b2', 'c475a9c7b08545b9b359d1a97f14ec8c', '47d527740de74ed88f65e946b4d0500a', '4363aec53aac44309e8afa5cf58ce950']
 let lz_cookie = {}
 
 if (process.env.ACTIVITY_ID && process.env.ACTIVITY_ID != "") {
@@ -35,7 +34,7 @@ if ($.isNode()) {
     cookiesArr.reverse();
     cookiesArr = cookiesArr.filter(item => !!item);
 }
-let doPush = process.env.DoPush || true; // 设置为 false 每次推送, true 跑完了推送
+let doPush = process.env.DoPush || false; // 设置为 false 每次推送, true 跑完了推送
 let removeSize = process.env.JD_CART_REMOVESIZE || 20; // 运行一次取消多全部已关注的商品。数字0表示不取关任何商品
 let isRemoveAll = process.env.JD_CART_REMOVEALL || true;    //是否清空，如果为false，则上面设置了多少就只删除多少条
 $.keywords = process.env.JD_CART_KEYWORDS || []
@@ -80,12 +79,12 @@ $.keywordsNum = 0;
                 $.drawInfoName = false
                 $.getPrize = null;
                 await addCart();
-                // if($.drawInfoName === false || $.getPrize === null){
-                //     break
-                // } else if($.getPrize != null && !$.getPrize.includes("京豆")){
-                //     break
-                // }
-                // await $.wait(3000)
+                if($.drawInfoName === false || $.getPrize === null){
+                    break
+                } else if($.getPrize != null && !$.getPrize.includes("京豆")){
+                    break
+                }
+                await $.wait(2000)
                 // await requireConfig();
                 // do {
                 //     await getCart_xh();
@@ -138,11 +137,11 @@ async function addCart() {
             if ($.activityContent.drawInfo.name.includes("京豆")) {
                 $.log("-> 加入购物车")
                 for(let i in $.activityContent.cpvos){
-                    await $.wait(3000)
+                    await $.wait(1000)
                     await task('addCart', `activityId=${$.activityId}&pin=${encodeURIComponent($.secretPin)}&productId=${$.activityContent.cpvos[i].skuId}`)
                 }
                 $.log("-> 抽奖")
-                await $.wait(3000)
+                await $.wait(1000)
                 await task('getPrize', `activityId=${$.activityId}&pin=${encodeURIComponent($.secretPin)}`)
             } else {
                 $.log("未能成功获取到活动信息")
@@ -196,7 +195,7 @@ function task(function_id, body, isCommon = 0) {
                                             message += data.data.name + " "
                                         }
                                     } else {
-                                        //await notify.sendNotify($.name, data.data.name, '', `\n`);
+                                        // await notify.sendNotify($.name, data.data.name, '', `\n`);
                                     }
                                     break
                                 default:
